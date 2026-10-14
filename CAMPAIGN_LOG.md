@@ -53,3 +53,7 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   - **model_350: 1.372 s @0.35 m/s, 5/5  <- campaign best** (onnx: /workspace/ckpt_fast4/model_350.onnx)
   - 400 11.112 (4/5), 450 20.804 (3/5), 499 20.788 (3/5)
 - Fine-tuning is noisy: one-seed falls appear at many checkpoints. Campaign spend: ~$2.15 of $10.
+
+## fast5 — commit a8098e9 (launched 21:03 Beijing)
+- Job 6acf7d925ccb47ba0f79a393, l4x1, +500 iters, timeout 2h; ckpt dadudu/mjlab-sprint2m-microduck-20261014-210309
+- Warm start from fast4 model_350; fall_penalty -10→-20; upright 0.8→1.2; new lean_forward reward (clamp body gravity_x 0..0.75) weight 1.5; fell_over 75°; fixed LR 3e-4; save every 50.
