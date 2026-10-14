@@ -140,6 +140,18 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
     return torch.atan2(torch.sin(error), torch.cos(error)).unsqueeze(-1)
 
 
+BUBU_FWD_W = 3.0
+BUBU_TRACK_W = 0.5
+BUBU_UPRIGHT_W = 0.5
+
+
+def forward_speed_reward(env: ManagerBasedRlEnv, max_speed: float = 3.0) -> torch.Tensor:
+    """bubu-sprint-fast: pay raw forward body-frame speed, whatever the command says."""
+    asset = env.scene["robot"]
+    vx = asset.data.root_link_lin_vel_b[:, 0]
+    return torch.clamp(vx, min=-1.0, max=max_speed)
+
+
 def make_env_cfg(
     play: bool = False,
 ) -> ManagerBasedRlEnvCfg:
@@ -822,6 +834,17 @@ def make_env_cfg(
             ],
         },
     )
+
+    # === bubu-sprint-fast overrides (speed over command tracking) ===
+    cfg.rewards["forward_speed"] = RewardTermCfg(
+        func=forward_speed_reward, weight=BUBU_FWD_W, params={"max_speed": 3.0}
+    )
+    cfg.rewards["track_linear_velocity"].weight = BUBU_TRACK_W
+    cfg.rewards["upright"].weight = BUBU_UPRIGHT_W
+    cfg.rewards["upright"].params["std"] = math.sqrt(0.3)  # tolerate a forward lean
+    cfg.rewards["pose"].weight = 0.5
+    if "fell_over" in cfg.terminations:
+        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(70.0)
 
     return cfg
 
