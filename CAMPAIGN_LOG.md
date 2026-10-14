@@ -63,3 +63,10 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   - most later ckpts 4/5 or worse (noise continues)
   - model_750 in repo is leftover warm_fast2 seed (1.472 s), ignore
 - Campaign spend: ~$2.5 of $10. Still far from 0.9 s.
+
+## fast6 — commit 5a11134 (launched 21:58 Beijing)
+- Job 6acf8a965ccb47ba0f79ac44, l4x1, +400 iters, timeout 2h; ckpt dadudu/mjlab-sprint2m-microduck-20261014-215842
+- Warm from fast5 model_100; LR 1e-4 fixed; save every 25.
+- New: progress along spawn heading; finish_bonus (w20, pays 1+max(0,4-t) on reaching 2 m); reached_2m termination (as time_out, so no fall penalty);
+  lean_near_finish (w3, forward pitch paid only after 1.5 m); episode 20s -> 8s; spawn xy ±0.05 m.
+  (Command speed was already randomized 0.2–1.2 and velocity pushes already on.)
