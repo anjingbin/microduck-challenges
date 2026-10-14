@@ -57,3 +57,9 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## fast5 — commit a8098e9 (launched 21:03 Beijing)
 - Job 6acf7d925ccb47ba0f79a393, l4x1, +500 iters, timeout 2h; ckpt dadudu/mjlab-sprint2m-microduck-20261014-210309
 - Warm start from fast4 model_350; fall_penalty -10→-20; upright 0.8→1.2; new lean_forward reward (clamp body gravity_x 0..0.75) weight 1.5; fell_over 75°; fixed LR 3e-4; save every 50.
+- Result: COMPLETED ~25 min, ~$0.35. Warm start OK (model_0 = 1.372 s).
+  - model_0: 1.372 s @0.85, 5/5 (seed)
+  - **model_100: 1.352 s @0.55, 5/5  <- campaign best** (onnx: /workspace/ckpt_fast5/model_100.onnx)
+  - most later ckpts 4/5 or worse (noise continues)
+  - model_750 in repo is leftover warm_fast2 seed (1.472 s), ignore
+- Campaign spend: ~$2.5 of $10. Still far from 0.9 s.
