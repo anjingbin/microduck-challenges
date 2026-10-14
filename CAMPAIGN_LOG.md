@@ -70,3 +70,8 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - New: progress along spawn heading; finish_bonus (w20, pays 1+max(0,4-t) on reaching 2 m); reached_2m termination (as time_out, so no fall penalty);
   lean_near_finish (w3, forward pitch paid only after 1.5 m); episode 20s -> 8s; spawn xy ±0.05 m.
   (Command speed was already randomized 0.2–1.2 and velocity pushes already on.)
+- Result: COMPLETED ~33 min, ~$0.45. Warm start OK (model_0 ≈1.37 s).
+  - **model_75: 1.284 s @1.10 m/s, 5/5  <- campaign best** (onnx: /workspace/ckpt_fast6/2026-10-14_14-00-13_fast6_model_75.onnx)
+  - model_25 1.332 / model_175 1.288 / model_399 1.556 (all 5/5)
+  - Many mid/late ckpts 4/5 (~11 s). Finish bonus + shorter episodes helped early; late instability remains.
+- Ideas that helped: finish_bonus + denser ckpts (caught 75/175). Dive-near-finish + lower LR: mixed. Campaign spend ~$2.95 of $10.
