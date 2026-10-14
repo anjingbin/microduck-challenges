@@ -46,3 +46,10 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Job 6acf69b4c66288145223f186, l4x1, +500 iters, timeout 2h; ckpt repo dadudu/mjlab-sprint2m-microduck-20261014-193824
 - Warm start from fast2 model_750 (checkpoint tracked at logs/rsl_rl/sprint_2m/warm_fast2/), --agent.resume,
   MICRODUCK_WARM_START=1; fixed LR 3e-4; fast3 rewards (fall penalty -10, upright 0.8); save every 50.
+- Result: COMPLETED (~25 min incl. setup, ~$0.35). Warm start worked: model_0 already scores 1.448 s (≈ fast2 model_750).
+  (Job log's iteration counter restarted at 0/500 and episode length started low because curricula restart.)
+  - model_0 1.448 / 50 1.456 / 100 1.436 (5/5)
+  - 150 11.172 (4/5), 200 11.192 (4/5), 250 20.852 (3/5), 300 11.100 (4/5)
+  - **model_350: 1.372 s @0.35 m/s, 5/5  <- campaign best** (onnx: /workspace/ckpt_fast4/model_350.onnx)
+  - 400 11.112 (4/5), 450 20.804 (3/5), 499 20.788 (3/5)
+- Fine-tuning is noisy: one-seed falls appear at many checkpoints. Campaign spend: ~$2.15 of $10.
