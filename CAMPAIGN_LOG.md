@@ -79,3 +79,7 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## fast7 — commit 8a1bcd8 (launched 22:45 Beijing)
 - Job 6acf95935ccb47ba0f79bb3a, l4x1, +300 iters, timeout 2h; ckpt dadudu/mjlab-sprint2m-microduck-20261014-224535
 - Warm from fast6 model_75; finish_bonus 20→30; lean_near_finish 3→5; LR 1e-4; save every 25.
+- Result: COMPLETED (sat ~15 min in SCHEDULING; ~$0.3–0.45 billed).
+  - **model_200: 1.228 s @0.20 m/s, 5/5  <- campaign best** (onnx: /workspace/ckpt_fast7/2026-10-14_15-04-39_fast7_model_200.onnx)
+  - model_125 1.244 / 150 1.268 / 175 1.244 / model_0 1.264 (5/5); others 4/5 or 3/5
+- Stronger finish shaping gave a stable window at 125–200. Campaign spend ~$3.4 of $10.
