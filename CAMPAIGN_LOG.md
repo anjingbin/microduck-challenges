@@ -95,3 +95,5 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - fast9 result: COMPLETED (~45 min in SCHEDULING, ~25 min running, ~$0.35). Worse: best model_100 1.352 s 5/5; most 2/5–4/5. Stronger fall/upright hurt.
 
 ## fast10 — fast7 settings again (finish 30, lean 5, fall -20, upright 1.2), warm from fast8 model_0 (1.224 s)
+- fast10 result: job 6ad00cf55ccb47ba0f7a2053, 16 min running (~$0.3). **model_75: 1.204 s @0.50, 5/5 <- overall best** (/workspace/ckpt_fast10/2026-10-14_23-17-25_fast10_model_75.onnx); others 3/5–4/5.
+- Campaign spend ≈ $4.0 of $10 (fast1–fast10). Publishing fast10 model_75 to Arena.
