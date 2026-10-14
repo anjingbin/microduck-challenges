@@ -162,6 +162,45 @@ def lean_forward_reward(env: ManagerBasedRlEnv, max_lean: float = 0.75) -> torch
 
 
 
+# ---- fast6: sprint-shaped progress (distance along spawn heading) ----
+def _bubu_progress(env: ManagerBasedRlEnv) -> torch.Tensor:
+    asset = env.scene["robot"]
+    pos = asset.data.root_link_pos_w[:, :2]
+    q = asset.data.root_link_quat_w
+    if not hasattr(env, "_bubu_start"):
+        env._bubu_start = pos.clone()
+        env._bubu_dir = torch.zeros_like(pos); env._bubu_dir[:, 0] = 1.0
+    fresh = env.episode_length_buf <= 1
+    if fresh.any():
+        w, x, y, z = q[:, 0], q[:, 1], q[:, 2], q[:, 3]
+        yaw = torch.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+        d = torch.stack([torch.cos(yaw), torch.sin(yaw)], dim=-1)
+        env._bubu_start[fresh] = pos[fresh]
+        env._bubu_dir[fresh] = d[fresh]
+    return torch.sum((pos - env._bubu_start) * env._bubu_dir, dim=-1)
+
+
+def sprint_finish_bonus(env: ManagerBasedRlEnv, length_m: float = 2.0) -> torch.Tensor:
+    """Pays once on crossing 2 m; earlier crossings pay more (time bonus)."""
+    prog = _bubu_progress(env)
+    t = env.episode_length_buf.float() * env.step_dt
+    hit = prog >= length_m
+    return hit.float() * (1.0 + torch.clamp(4.0 - t, min=0.0))
+
+
+def sprint_reached(env: ManagerBasedRlEnv, length_m: float = 2.0) -> torch.Tensor:
+    return _bubu_progress(env) >= length_m
+
+
+def lean_near_finish(env: ManagerBasedRlEnv, start_m: float = 1.5, max_lean: float = 0.85) -> torch.Tensor:
+    """Extra pay for diving forward in the last ~0.5 m (Arena allows a dive)."""
+    from mjlab.utils.lab_api.math import quat_apply_inverse
+    asset = env.scene["robot"]
+    pg = quat_apply_inverse(asset.data.root_link_quat_w, asset.data.gravity_vec_w)
+    near = (_bubu_progress(env) >= start_m).float()
+    return near * torch.clamp(pg[:, 0], min=0.0, max=max_lean)
+
+
 def make_env_cfg(
     play: bool = False,
 ) -> ManagerBasedRlEnvCfg:
@@ -862,6 +901,14 @@ def make_env_cfg(
     cfg.rewards["lean_forward"] = RewardTermCfg(
         func=lean_forward_reward, weight=1.5, params={"max_lean": 0.75}
     )
+    # fast6: sprint-shaped episode
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=20.0)
+    cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=3.0)
+    cfg.terminations["reached_2m"] = TerminationTermCfg(func=sprint_reached, time_out=True)
+    cfg.episode_length_s = 8.0
+    # Arena perturbation: yaw ±2°, joints ±0.01 rad, starting standing
+    cfg.events["reset_base"].params["pose_range"]["x"] = (-0.05, 0.05)
+    cfg.events["reset_base"].params["pose_range"]["y"] = (-0.05, 0.05)
     # Arena fall is ~60° held 0.3s; keep training terminate a bit looser so it can dive.
     if "fell_over" in cfg.terminations:
         cfg.terminations["fell_over"].params["limit_angle"] = math.radians(75.0)
@@ -903,7 +950,7 @@ RL_CFG = RslRlOnPolicyRunnerCfg(
     wandb_project="mjlab_microduck",
     experiment_name="sprint_2m",  # logs/rsl_rl/sprint_2m/
     run_name="sprint_2m",
-    save_interval=50,
+    save_interval=25,
     num_steps_per_env=24,
     max_iterations=50_000,
 )
