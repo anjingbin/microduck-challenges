@@ -142,7 +142,7 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 BUBU_FWD_W = 5.0
 BUBU_TRACK_W = 0.0
-BUBU_UPRIGHT_W = 0.8
+BUBU_UPRIGHT_W = 1.2
 
 
 def forward_speed_reward(env: ManagerBasedRlEnv, max_speed: float = 3.0) -> torch.Tensor:
@@ -150,6 +150,16 @@ def forward_speed_reward(env: ManagerBasedRlEnv, max_speed: float = 3.0) -> torc
     asset = env.scene["robot"]
     vx = asset.data.root_link_lin_vel_b[:, 0]
     return torch.clamp(vx, min=-1.0, max=max_speed)
+
+
+def lean_forward_reward(env: ManagerBasedRlEnv, max_lean: float = 0.75) -> torch.Tensor:
+    """Pay for a forward pitch (body-frame gravity x), capped below a faceplant."""
+    from mjlab.utils.lab_api.math import quat_apply_inverse
+    asset = env.scene["robot"]
+    pg = quat_apply_inverse(asset.data.root_link_quat_w, asset.data.gravity_vec_w)
+    # Convention: +x body lean when gravity_x > 0. Cap so ~48° is peak, not 90°.
+    return torch.clamp(pg[:, 0], min=0.0, max=max_lean)
+
 
 
 def make_env_cfg(
@@ -848,9 +858,13 @@ def make_env_cfg(
     for st in cfg.curriculum["action_rate_weight"].params["weight_stages"]:
         st["weight"] = max(st["weight"], -0.3)
     from mjlab.envs.mdp.rewards import is_terminated as _is_terminated
-    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-10.0)
+    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
+    cfg.rewards["lean_forward"] = RewardTermCfg(
+        func=lean_forward_reward, weight=1.5, params={"max_lean": 0.75}
+    )
+    # Arena fall is ~60° held 0.3s; keep training terminate a bit looser so it can dive.
     if "fell_over" in cfg.terminations:
-        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(70.0)
+        cfg.terminations["fell_over"].params["limit_angle"] = math.radians(75.0)
 
     return cfg
 
