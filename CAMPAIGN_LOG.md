@@ -22,3 +22,10 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Job 6acf50165ccb47ba0f798c90, l4x1, 1000 iters, timeout 2h
 - Changes vs fast1: forward_speed weight 3->5, cap 3->4 m/s; track_linear_velocity 0.5->0;
   pose 0.5->0.3; air_time 3.0->1.5; action_rate curriculum clamped at -0.3 (was ramp to -1.0). Fresh start (no warm start).
+- Result: COMPLETED 44m54s, ~$0.6. Ckpt repo dadudu/mjlab-sprint2m-microduck-20261014-174907 (local /workspace/ckpt_fast2)
+  - model_250: 2.100 s @0.45, 5/5
+  - model_500: 1.680 s @0.35, 5/5
+  - model_750: 1.472 s @0.20, 5/5  <- best so far (onnx: /workspace/ckpt_fast2/model_750.onnx)
+  - model_999: 20.820 s @0.55, 3/5 (falls; unstable late)
+- Campaign spend: ~$1.2 of $10.
+- Next idea: score intermediate ckpts more densely (save_interval 100), keep fast2 rewards but add a mild fall penalty / keep action_rate ramp, or 750-iter run.
