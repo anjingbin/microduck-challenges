@@ -17,3 +17,8 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## Next idea (fast2)
 - Raise forward_speed weight / cap (3 -> 5), drop track_linear_velocity to 0, lower air_time/pose,
   ease action_rate curriculum; warm-start from fast1 model_999 if supported; 1000 iters, timeout 2h.
+
+## fast2 — commit e21ce32 (launched 17:49 Beijing)
+- Job 6acf50165ccb47ba0f798c90, l4x1, 1000 iters, timeout 2h
+- Changes vs fast1: forward_speed weight 3->5, cap 3->4 m/s; track_linear_velocity 0.5->0;
+  pose 0.5->0.3; air_time 3.0->1.5; action_rate curriculum clamped at -0.3 (was ramp to -1.0). Fresh start (no warm start).
