@@ -92,3 +92,6 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## fast9 — commit 7a4abfe (launched 00:37)
 - Job 6acfafaf5ccb47ba0f79ded1; ckpt dadudu/mjlab-sprint2m-microduck-20261015-003658
 - Warm fast8 model_0; finish 40→30; fall_penalty -20→-40; upright 1.2→1.5.
+- fast9 result: COMPLETED (~45 min in SCHEDULING, ~25 min running, ~$0.35). Worse: best model_100 1.352 s 5/5; most 2/5–4/5. Stronger fall/upright hurt.
+
+## fast10 — fast7 settings again (finish 30, lean 5, fall -20, upright 1.2), warm from fast8 model_0 (1.224 s)
