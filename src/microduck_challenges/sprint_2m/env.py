@@ -902,7 +902,7 @@ def make_env_cfg(
         func=lean_forward_reward, weight=1.5, params={"max_lean": 0.75}
     )
     # fast6: sprint-shaped episode
-    cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=30.0)
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=40.0)
     cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0)
     cfg.terminations["reached_2m"] = TerminationTermCfg(func=sprint_reached, time_out=True)
     cfg.episode_length_s = 8.0
