@@ -31,5 +31,18 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Next idea: score intermediate ckpts more densely (save_interval 100), keep fast2 rewards but add a mild fall penalty / keep action_rate ramp, or 750-iter run.
 
 ## fast3 — commit 19e10a9 (launched 18:46 Beijing)
-- Job 6acf5d785ccb47ba0f799b87, l4x1, 1000 iters, timeout 2h; ckpt repo dadudu/mjlab-sprint2m-microduck-20261014-184614
+- Job 6acf5d785ccb47ba0f799b87, l4x1, 1000 iters, ~46m, ~$0.6; ckpt repo dadudu/mjlab-sprint2m-microduck-20261014-184614 (local /workspace/ckpt_fast3)
 - Changes vs fast2: fall_penalty (is_terminated) weight -10; upright 0.5->0.8; save_interval 250->100. Fresh start.
+- Result: COMPLETED. Local Arena scores (sprint-2m):
+  - model_300: 1.808 s @0.25, 5/5
+  - model_400: 1.724 s @0.30, 5/5
+  - model_800: 1.484 s @0.55, 5/5  <- best of fast3 (onnx: /workspace/ckpt_fast3/model_800.onnx)
+  - model_900: 50.000 s, 0/5 (collapse)
+  - model_999: 30.516 s @0.45, 2/5 (collapse)
+- Still behind fast2 best (model_750 1.472 s). Campaign spend: ~$1.8 of $10.
+- Next idea: warm-start from fast2 model_750 / fast3 model_800; or raise fall_penalty earlier and stop/early-pick before late collapse; or shorten to 800 iters.
+
+## fast4 — commit f3fcd05 (launched 19:38 Beijing)
+- Job 6acf69b4c66288145223f186, l4x1, +500 iters, timeout 2h; ckpt repo dadudu/mjlab-sprint2m-microduck-20261014-193824
+- Warm start from fast2 model_750 (checkpoint tracked at logs/rsl_rl/sprint_2m/warm_fast2/), --agent.resume,
+  MICRODUCK_WARM_START=1; fixed LR 3e-4; fast3 rewards (fall penalty -10, upright 0.8); save every 50.
