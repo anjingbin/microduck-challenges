@@ -140,8 +140,8 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
     return torch.atan2(torch.sin(error), torch.cos(error)).unsqueeze(-1)
 
 
-BUBU_FWD_W = 3.0
-BUBU_TRACK_W = 0.5
+BUBU_FWD_W = 5.0
+BUBU_TRACK_W = 0.0
 BUBU_UPRIGHT_W = 0.5
 
 
@@ -837,12 +837,16 @@ def make_env_cfg(
 
     # === bubu-sprint-fast overrides (speed over command tracking) ===
     cfg.rewards["forward_speed"] = RewardTermCfg(
-        func=forward_speed_reward, weight=BUBU_FWD_W, params={"max_speed": 3.0}
+        func=forward_speed_reward, weight=BUBU_FWD_W, params={"max_speed": 4.0}
     )
     cfg.rewards["track_linear_velocity"].weight = BUBU_TRACK_W
     cfg.rewards["upright"].weight = BUBU_UPRIGHT_W
     cfg.rewards["upright"].params["std"] = math.sqrt(0.3)  # tolerate a forward lean
-    cfg.rewards["pose"].weight = 0.5
+    cfg.rewards["pose"].weight = 0.3
+    cfg.rewards["air_time"].weight = 1.5
+    # ease the action_rate ramp (-0.1 -> -1.0) to at most -0.3
+    for st in cfg.curriculum["action_rate_weight"].params["weight_stages"]:
+        st["weight"] = max(st["weight"], -0.3)
     if "fell_over" in cfg.terminations:
         cfg.terminations["fell_over"].params["limit_angle"] = math.radians(70.0)
 
