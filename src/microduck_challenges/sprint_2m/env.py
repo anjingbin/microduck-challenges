@@ -142,7 +142,7 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 BUBU_FWD_W = 5.0
 BUBU_TRACK_W = 0.0
-BUBU_UPRIGHT_W = 0.5
+BUBU_UPRIGHT_W = 0.8
 
 
 def forward_speed_reward(env: ManagerBasedRlEnv, max_speed: float = 3.0) -> torch.Tensor:
@@ -847,6 +847,8 @@ def make_env_cfg(
     # ease the action_rate ramp (-0.1 -> -1.0) to at most -0.3
     for st in cfg.curriculum["action_rate_weight"].params["weight_stages"]:
         st["weight"] = max(st["weight"], -0.3)
+    from mjlab.envs.mdp.rewards import is_terminated as _is_terminated
+    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-10.0)
     if "fell_over" in cfg.terminations:
         cfg.terminations["fell_over"].params["limit_angle"] = math.radians(70.0)
 
@@ -887,7 +889,7 @@ RL_CFG = RslRlOnPolicyRunnerCfg(
     wandb_project="mjlab_microduck",
     experiment_name="sprint_2m",  # logs/rsl_rl/sprint_2m/
     run_name="sprint_2m",
-    save_interval=250,
+    save_interval=100,
     num_steps_per_env=24,
     max_iterations=50_000,
 )
