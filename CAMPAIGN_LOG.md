@@ -87,3 +87,4 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## fast8 — commit cb29bb5 (launched 00:12 Beijing)
 - Job 6acfa9cc5ccb47ba0f79d565; ckpt dadudu/mjlab-sprint2m-microduck-20261015-001152
 - Warm fast7 model_200; finish_bonus 30→40; +300 iters LR 1e-4, save 25. Automated via run_round.sh.
+- Result: COMPLETED, 16 min running (~$0.3). Best model_0 1.224 s 5/5 (≈ warm start); model_200 1.232 5/5; rest 3/5–4/5. finish 40 destabilized.
