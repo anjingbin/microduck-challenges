@@ -75,3 +75,7 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   - model_25 1.332 / model_175 1.288 / model_399 1.556 (all 5/5)
   - Many mid/late ckpts 4/5 (~11 s). Finish bonus + shorter episodes helped early; late instability remains.
 - Ideas that helped: finish_bonus + denser ckpts (caught 75/175). Dive-near-finish + lower LR: mixed. Campaign spend ~$2.95 of $10.
+
+## fast7 — commit 8a1bcd8 (launched 22:45 Beijing)
+- Job 6acf95935ccb47ba0f79bb3a, l4x1, +300 iters, timeout 2h; ckpt dadudu/mjlab-sprint2m-microduck-20261014-224535
+- Warm from fast6 model_75; finish_bonus 20→30; lean_near_finish 3→5; LR 1e-4; save every 25.
