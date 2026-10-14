@@ -29,3 +29,7 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   - model_999: 20.820 s @0.55, 3/5 (falls; unstable late)
 - Campaign spend: ~$1.2 of $10.
 - Next idea: score intermediate ckpts more densely (save_interval 100), keep fast2 rewards but add a mild fall penalty / keep action_rate ramp, or 750-iter run.
+
+## fast3 — commit 19e10a9 (launched 18:46 Beijing)
+- Job 6acf5d785ccb47ba0f799b87, l4x1, 1000 iters, timeout 2h; ckpt repo dadudu/mjlab-sprint2m-microduck-20261014-184614
+- Changes vs fast2: fall_penalty (is_terminated) weight -10; upright 0.5->0.8; save_interval 250->100. Fresh start.
