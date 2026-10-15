@@ -155,3 +155,12 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 
 ### Roller published
 - roll2 model_250 as bubu-roll2-250 -> public dadudu/microduck-bubu-roller (rev 7ab2141); Arena roller-sprint-2m 2.332 s 5/5 @1.5 m/s, rank 53/70, run 01M4Z8QC1T7GF2BMHTX2JQ.
+
+### roll5 (job 6ad094f2c66288145224eaaf, repo dadudu/mjlab-rollersprint2m-microduck-20261015-165508)
+- Xin trace analysis (seed 3, correct JOINT_NAMES mapping): pitch ~44 deg at t=0, mean 32 deg, 77 deg at finish; NOT a heel wheelie in sim:
+  each wheel touches ground only 12-18% of frames, all 4 airborne 43% (bounding lunge); trunk z median 0.151; head thrown (neck ~-1.4 rad).
+- Base roll2/3 set (roll4 removals reverted). Removed forward_lean (15 deg target) + start_splay; upright 2->1; lean cap 0.6;
+  + pitch_target (exp, 0.56 rad, std 0.2, w4); early_speed w6; neck_joint_pos -0.5->-0.1; cmd stages 0.6/1.2/2.0. Warm roll2-250. 28.1 min (~$0.37). Total ~$6.7.
+- Best: model_100 2.264 s 5/5 (beats roll2 2.332 by 0.07 s). 25 2.316, 50 2.320 5/5; >=125 degrade (2-4/5).
+- Gait model_100: lean now 33 deg median (roll2 15) — matches Xin's ~30; but still glides on left wheels (contact 76-84%), never airborne,
+  trunk z 0.113, wheel lift <=4 cm, first-0.2 s speed 0.56 (Xin 1.26). Leaning alone gave little speed.
