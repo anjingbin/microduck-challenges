@@ -165,3 +165,10 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Gait model_100: lean now 33 deg median (roll2 15) — matches Xin's ~30; but still glides on left wheels (contact 76-84%), never airborne,
   trunk z 0.113, wheel lift <=4 cm, first-0.2 s speed 0.56 (Xin 1.26). Leaning alone gave little speed.
 - roll5 model_100 as bubu-roll5-100 -> dadudu/microduck-bubu-roller (rev 8fe9099); Arena 2.264 s 5/5, rank 54/72, run 01M4ZEZ0Q409SGH360X9TA.
+
+### roll6 (job 6ad0bc9cc662881452250f3a, repo dadudu/mjlab-rollersprint2m-microduck-20261015-194421)
+- Warm roll5 model_100; keeps roll5 terms. + airborne (both foot sites >1.5 cm, vx>0.5) weight ramp 0.5->2 (it75)->4 (it150)->6 (it250);
+  foot_clearance ramp 3->4.5->6; early_speed w10. 450 iters (completed, log shows it 449/450; wait log RUN_MIN 0 is an artifact of box outage). ~25 min (~$0.35). Total ~$7.05.
+- Best: model_0 2.248 s 5/5 (= warm start re-scored, noise vs 2.264); model_50 2.368 5/5; all others 1-4/5. No real gain.
+- Gait (model_0/50/325): airborne 0% (Xin 43%), lean median 33 deg (unchanged), vx@0.5s 0.59-0.84, trunk z ~0.11, wheel lift <=7 cm.
+  The bounding reward never got traction from this warm start; the policy just got less stable.
