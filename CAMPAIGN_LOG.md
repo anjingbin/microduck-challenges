@@ -210,3 +210,4 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - RESULT: worse. No trained ckpt reaches 5/5: best 4/5 (model_0 12.96 s, model_50 13.04, 225 13.14, 275 13.16, 75 13.20; finishing seeds ~1.2-1.5 s).
   Even model_0 (warm weights after the first update) drops to 4/5 -> the policy is knife-edge on Arena seed 2; PPO on the pyramid-slope terrain moved it off.
 - Best hill model remains dive1 model_75 (1.224 s 5/5, untrained on hill). Would rank ~#30/46; top-10 cutoff 0.856 s.
+- PUBLISHED dive1 model_75 as bubu-hill-dive1-75 -> public dadudu/microduck-bubu-hill rev de63112; Arena hill-climb-1m5 1.224 s 5/5 @0.30, rank 30/47, run 01M505E13TNZ7ZY8P92DA1. Hill campaign stopped. Total spend ~$7.41.
