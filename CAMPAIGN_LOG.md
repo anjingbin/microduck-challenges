@@ -102,3 +102,6 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## dive1 — namenu-style lean (launched ~08:30 Beijing)
 - Warm from fast10 model_75 (1.204 s); +400 iters, LR 1e-4, save 25.
 - lean_forward (whole episode) weight 1.5→4, cap 0.75→0.85 (~58°); upright 1.2→0.3; pose 0.3→0.15; episode 8→5 s; finish bonus 30, lean_near_finish 5, fall -20, fell_over 75° kept.
+- dive1 result: job 6ad01dfd5ccb47ba0f7a2942, 20 min running (~$0.35). **No checkpoint finished 5/5** (best 4/5 ≈ 10.9–11.3 s; late ckpts 0–2/5).
+  - Gait clearly changed: model_275 finishers 1.28–2.24 s; replay trace tilt mean 47°, peak 168° (it pitches past vertical / tumbles and recovers, then lands over the line).
+  - Verdict: aggressive lean from step 0 breaks the 5/5 reliability; fast10 model_75 (1.204 s) stays the best. Campaign ≈ $4.35 of $10.
