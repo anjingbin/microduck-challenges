@@ -652,7 +652,54 @@ def make_env_cfg(
         func=bubu_cmd_vx_curriculum,
         params={"stages": [(0, 0.6), (100 * 24, 1.0), (250 * 24, 1.5)]},
     )
+    # === roll3: skate start + leader posture ===
+    feet = SceneEntityCfg("robot", site_names=("left_foot", "right_foot"))
+    cfg.rewards["start_splay"] = RewardTermCfg(func=bubu_start_splay, weight=10.0, params={"asset_cfg": feet, "t_end": 0.4})
+    cfg.rewards["early_speed"] = RewardTermCfg(func=bubu_early_speed, weight=4.0, params={"t_end": 0.4})
+    cfg.rewards["trunk_height"] = RewardTermCfg(func=bubu_trunk_height, weight=2.0, params={"target": 0.145, "std": 0.02})
+    cfg.rewards["foot_clearance"] = RewardTermCfg(func=bubu_foot_clearance, weight=3.0, params={"asset_cfg": feet, "max_lift": 0.12})
     return cfg
+
+
+def _bubu_t(env):
+    return env.episode_length_buf.float() * env.step_dt
+
+
+def _bubu_vx(env):
+    from mjlab.utils.lab_api.math import quat_apply_inverse
+    a = env.scene["robot"]
+    return quat_apply_inverse(a.data.root_link_quat_w, a.data.root_link_lin_vel_w)[:, 0]
+
+
+def bubu_start_splay(env, asset_cfg, t_end=0.4):
+    """First t_end s: pay lateral foot separation (skate push stance), body frame."""
+    import torch
+    from mjlab.utils.lab_api.math import quat_apply_inverse
+    a = env.scene["robot"]
+    p = a.data.site_pos_w[:, asset_cfg.site_ids] - a.data.root_link_pos_w[:, None, :]
+    q = a.data.root_link_quat_w[:, None, :].expand(-1, p.shape[1], -1)
+    pb = quat_apply_inverse(q.reshape(-1, 4), p.reshape(-1, 3)).reshape(p.shape)
+    sep = (pb[:, 0, 1] - pb[:, 1, 1]).abs()
+    return (_bubu_t(env) < t_end).float() * torch.clamp(sep, max=0.16)
+
+
+def bubu_early_speed(env, t_end=0.4):
+    import torch
+    return (_bubu_t(env) < t_end).float() * torch.clamp(_bubu_vx(env), min=0.0, max=2.0)
+
+
+def bubu_trunk_height(env, target=0.145, std=0.02):
+    import torch
+    z = env.scene["robot"].data.root_link_pos_w[:, 2]
+    return torch.exp(-((z - target) / std) ** 2)
+
+
+def bubu_foot_clearance(env, asset_cfg, max_lift=0.12):
+    """Stride height: max foot-height gap, only while moving forward (no in-place hopping)."""
+    import torch
+    z = env.scene["robot"].data.site_pos_w[:, asset_cfg.site_ids, 2]
+    lift = torch.clamp(z.max(1).values - z.min(1).values, max=max_lift)
+    return (_bubu_vx(env) > 0.5).float() * lift
 
 
 def bubu_cmd_vx_curriculum(env, env_ids, stages):
