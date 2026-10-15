@@ -642,7 +642,30 @@ def make_env_cfg(
     cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
     cfg.terminations["reached_2m"] = TerminationTermCfg(func=sprint_reached, time_out=True)
     cfg.episode_length_s = 8.0
+    # === roll2: speed curriculum + posture from leaders (taller, ~30 deg lean, end dive) ===
+    from microduck_challenges.sprint_2m.env import lean_forward_reward, lean_near_finish
+    cfg.rewards["wheel_speed"].weight = 1.0   # velocity tracking ~off
+    cfg.rewards["forward_speed"].weight = 8.0
+    cfg.rewards["lean_forward"] = RewardTermCfg(func=lean_forward_reward, weight=1.5, params={"max_lean": 0.5})
+    cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=3.0, params={"start_m": 1.6, "max_lean": 0.85})
+    cfg.curriculum["bubu_cmd_vx"] = CurriculumTermCfg(
+        func=bubu_cmd_vx_curriculum,
+        params={"stages": [(0, 0.6), (100 * 24, 1.0), (250 * 24, 1.5)]},
+    )
     return cfg
+
+
+def bubu_cmd_vx_curriculum(env, env_ids, stages):
+    import torch
+    del env_ids
+    hi = stages[0][1]
+    for step, v in stages:
+        if env.common_step_counter >= step:
+            hi = v
+    term = env.command_manager.get_term("twist")
+    lo = term.cfg.ranges.lin_vel_x[0]
+    term.cfg.ranges.lin_vel_x = (lo, hi)
+    return torch.tensor([hi])
 
 
 RL_CFG = RslRlOnPolicyRunnerCfg(
