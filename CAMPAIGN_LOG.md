@@ -117,3 +117,8 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## roll1 — fresh, 900 iters, l4x1, timeout 2h (launched ~10:05 Beijing)
 - Upstream Mjlab-RollerSprint2m-MicroDuck + forward_speed (w5, cap 3 m/s), finish_bonus (w30, 2 m along spawn heading),
   reached_2m termination, fall_penalty -20, episode 8 s, save every 25. Command range kept (-0.5..0.6, upstream: >0.6 broke learning).
+- roll1 result: job 6ad033b5c662881452249b89 COMPLETED 43m25s (~$0.6). Ckpt dadudu/mjlab-rollersprint2m-microduck-20261015-100013.
+  - Best **model_500: 2.696 s @0.40 m/s, 5/5** (onnx: /workspace/ckpt_roll1/2026-10-15_02-01-50_roll1_model_500.onnx)
+  - Nearby 5/5: 450 2.728 / 475 2.748 / 825 2.744 / 700 2.748; early 0–175 all 0/5 (40 s timeout).
+  - Arena #1 is 1.216 s — we are ~2.2× slower. Stable roller gait from ~225 on.
+  - Combined campaign spend ≈ $5.25 of $10.
