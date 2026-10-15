@@ -142,3 +142,13 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Best: model_0 2.320 s 5/5 (= warm start re-scored; noise vs 2.332), model_25 2.324 5/5, 175 2.364, 350 2.372, 375 2.416. Late ckpts degrade (1-4/5).
 - Gait vs roll2-250: start vx 0.54 -> 0.44-0.57 m/s, vx@0.5s 0.59 -> 0.62-0.81, trunk z median 0.109 -> 0.114-0.115 (target 0.145 not reached),
   wheel lift still 2-7 cm, tilt 14-17 deg. Skate splay/stride rewards did not change the gait materially. No improvement.
+
+### roll4 (job 6ad06b9b5ccb47ba0f7a555d, repo dadudu/mjlab-rollersprint2m-microduck-20261015-135844)
+- Warm roll2 model_250. REMOVED: com_height_target (paid 0.094-0.124 m), glide (w4), hip_roll_neutral (-2), gait_symmetry (-1),
+  forward_lean (15 deg target), action_rate_weight curriculum. SOFTENED: action_rate -1->-0.2, feet_flat -2->-0.5, pose 2->0.5,
+  upright 2->1, single_support 3->1. STRENGTHENED: start_splay w20 cap 0.20, early_speed w10, trunk_height w6, foot_clearance w10 cap 0.15.
+  500 iters, 26.1 min (~$0.35). Campaign total ~$6.3.
+- RESULT: collapse. model_0 2.328 s 5/5 (= warm start); every trained ckpt 0/5 or 1/5 (400, 450, 475 at 1/5).
+- Gait did change toward leaders: trunk z median 0.109 -> 0.140-0.144, wheel lift 2-4 cm -> 4-9 cm (model_100: 13-19 cm but falls at 1.4 s, tilt 115 deg),
+  tilt 15 -> 9-13 deg (lean lost). Start speed not better (first 0.2 s 0.35-0.73 vs 0.54-0.48). Policy is taller/higher-stepping but unstable.
+- Takeaway: the removed stabilizers were holding balance; next try should reintroduce them partially or ramp the new terms by curriculum.
