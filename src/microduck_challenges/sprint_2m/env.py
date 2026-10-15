@@ -142,7 +142,7 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 BUBU_FWD_W = 5.0
 BUBU_TRACK_W = 0.0
-BUBU_UPRIGHT_W = 1.2
+BUBU_UPRIGHT_W = 0.3
 
 
 def forward_speed_reward(env: ManagerBasedRlEnv, max_speed: float = 3.0) -> torch.Tensor:
@@ -891,7 +891,7 @@ def make_env_cfg(
     cfg.rewards["track_linear_velocity"].weight = BUBU_TRACK_W
     cfg.rewards["upright"].weight = BUBU_UPRIGHT_W
     cfg.rewards["upright"].params["std"] = math.sqrt(0.3)  # tolerate a forward lean
-    cfg.rewards["pose"].weight = 0.3
+    cfg.rewards["pose"].weight = 0.15
     cfg.rewards["air_time"].weight = 1.5
     # ease the action_rate ramp (-0.1 -> -1.0) to at most -0.3
     for st in cfg.curriculum["action_rate_weight"].params["weight_stages"]:
@@ -899,13 +899,13 @@ def make_env_cfg(
     from mjlab.envs.mdp.rewards import is_terminated as _is_terminated
     cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
     cfg.rewards["lean_forward"] = RewardTermCfg(
-        func=lean_forward_reward, weight=1.5, params={"max_lean": 0.75}
+        func=lean_forward_reward, weight=4.0, params={"max_lean": 0.85}
     )
     # fast6: sprint-shaped episode
     cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=30.0)
     cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0)
     cfg.terminations["reached_2m"] = TerminationTermCfg(func=sprint_reached, time_out=True)
-    cfg.episode_length_s = 8.0
+    cfg.episode_length_s = 5.0
     # Arena perturbation: yaw ±2°, joints ±0.01 rad, starting standing
     cfg.events["reset_base"].params["pose_range"]["x"] = (-0.05, 0.05)
     cfg.events["reset_base"].params["pose_range"]["y"] = (-0.05, 0.05)

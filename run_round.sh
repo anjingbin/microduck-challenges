@@ -8,7 +8,7 @@ from huggingface_hub import HfApi;print(sum(j.status.stage in ('RUNNING','SCHEDU
 mkdir -p logs/rsl_rl/sprint_2m/$W && cp $PT logs/rsl_rl/sprint_2m/$W/
 git add -f logs/rsl_rl/sprint_2m/$W/$CK src/microduck_challenges/sprint_2m/env.py
 git -c user.name=anjingbin -c user.email=anjingbin@users.noreply.github.com commit -qm "$RUN: $MSG"; git push -q origin bubu-sprint-fast
-MICRODUCK_WARM_START=1 uv run train Mjlab-Sprint2m-MicroDuck --env.scene.num-envs 4096 --agent.max-iterations 300 --agent.seed 1 --agent.logger tensorboard --agent.run-name $RUN --agent.resume True --agent.load-run $W --agent.load-checkpoint $CK --agent.algorithm.learning-rate 0.0001 --agent.algorithm.schedule fixed --hf-jobs --no-wandb --namespace dadudu --flavor l4x1 --timeout 2h > logs/$RUN.submit.log 2>&1 &
+MICRODUCK_WARM_START=1 uv run train Mjlab-Sprint2m-MicroDuck --env.scene.num-envs 4096 --agent.max-iterations ${ITERS:-300} --agent.seed 1 --agent.logger tensorboard --agent.run-name $RUN --agent.resume True --agent.load-run $W --agent.load-checkpoint $CK --agent.algorithm.learning-rate 0.0001 --agent.algorithm.schedule fixed --hf-jobs --no-wandb --namespace dadudu --flavor l4x1 --timeout 2h > logs/$RUN.submit.log 2>&1 &
 sleep 90
 uv run python - <<PY > logs/$RUN.wait.log 2>&1
 import time

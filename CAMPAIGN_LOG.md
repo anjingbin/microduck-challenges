@@ -98,3 +98,7 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - fast10 result: job 6ad00cf55ccb47ba0f7a2053, 16 min running (~$0.3). **model_75: 1.204 s @0.50, 5/5 <- overall best** (/workspace/ckpt_fast10/2026-10-14_23-17-25_fast10_model_75.onnx); others 3/5–4/5.
 - Campaign spend ≈ $4.0 of $10 (fast1–fast10). Publishing fast10 model_75 to Arena.
 - Published fast10 model_75 as bubu-fast10-75: Arena 1.204 s 5/5, run 01M4YCMY86P9EW09FCE6KA
+
+## dive1 — namenu-style lean (launched ~08:30 Beijing)
+- Warm from fast10 model_75 (1.204 s); +400 iters, LR 1e-4, save 25.
+- lean_forward (whole episode) weight 1.5→4, cap 0.75→0.85 (~58°); upright 1.2→0.3; pose 0.3→0.15; episode 8→5 s; finish bonus 30, lean_near_finish 5, fall -20, fell_over 75° kept.
