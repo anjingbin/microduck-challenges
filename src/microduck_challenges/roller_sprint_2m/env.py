@@ -668,7 +668,21 @@ def make_env_cfg(
     cfg.rewards["early_speed"].weight = 6.0
     cfg.rewards["neck_joint_pos_l2"].weight = -0.1  # Xin throws head forward (neck ~-1.4 rad)
     cfg.curriculum["bubu_cmd_vx"].params["stages"] = [(0, 0.6), (100 * 24, 1.2), (250 * 24, 2.0)]
+    # === roll6: gradual bounding curriculum (Xin airborne 43%) ===
+    cfg.rewards["airborne"] = RewardTermCfg(func=bubu_airborne, weight=0.5, params={"asset_cfg": feet, "min_z": 0.015})
+    cfg.rewards["early_speed"].weight = 10.0
+    _rw = microduck_mdp.reward_weight
+    cfg.curriculum["airborne_w"] = CurriculumTermCfg(func=_rw, params={"reward_name": "airborne", "weight_stages": [
+        {"step": 0, "weight": 0.5}, {"step": 75 * 24, "weight": 2.0}, {"step": 150 * 24, "weight": 4.0}, {"step": 250 * 24, "weight": 6.0}]})
+    cfg.curriculum["clearance_w"] = CurriculumTermCfg(func=_rw, params={"reward_name": "foot_clearance", "weight_stages": [
+        {"step": 0, "weight": 3.0}, {"step": 150 * 24, "weight": 4.5}, {"step": 250 * 24, "weight": 6.0}]})
     return cfg
+
+
+def bubu_airborne(env, asset_cfg, min_z=0.015):
+    """Both feet off the ground while moving forward (bounding flight phase)."""
+    z = env.scene["robot"].data.site_pos_w[:, asset_cfg.site_ids, 2]
+    return (z.min(1).values > min_z).float() * (_bubu_vx(env) > 0.5).float()
 
 
 def bubu_pitch_target(env, target=0.56, std=0.2):
