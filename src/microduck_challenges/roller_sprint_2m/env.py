@@ -658,6 +658,21 @@ def make_env_cfg(
     cfg.rewards["early_speed"] = RewardTermCfg(func=bubu_early_speed, weight=4.0, params={"t_end": 0.4})
     cfg.rewards["trunk_height"] = RewardTermCfg(func=bubu_trunk_height, weight=2.0, params={"target": 0.145, "std": 0.02})
     cfg.rewards["foot_clearance"] = RewardTermCfg(func=bubu_foot_clearance, weight=3.0, params={"asset_cfg": feet, "max_lift": 0.12})
+    # === roll4: remove low-glide / small-step shaping, strengthen stride/height/start ===
+    for k in ("com_height_target", "glide", "hip_roll_neutral", "gait_symmetry", "forward_lean"):
+        del cfg.rewards[k]
+    cfg.curriculum.pop("action_rate_weight", None)
+    cfg.rewards["action_rate_l2"].weight = -0.2
+    cfg.rewards["feet_flat"].weight = -0.5
+    cfg.rewards["pose"].weight = 0.5
+    cfg.rewards["upright"].weight = 1.0
+    cfg.rewards["single_support"].weight = 1.0
+    cfg.rewards["start_splay"].weight = 20.0
+    cfg.rewards["start_splay"].params["cap"] = 0.20
+    cfg.rewards["early_speed"].weight = 10.0
+    cfg.rewards["trunk_height"].weight = 6.0
+    cfg.rewards["foot_clearance"].weight = 10.0
+    cfg.rewards["foot_clearance"].params["max_lift"] = 0.15
     return cfg
 
 
@@ -671,7 +686,7 @@ def _bubu_vx(env):
     return quat_apply_inverse(a.data.root_link_quat_w, a.data.root_link_lin_vel_w)[:, 0]
 
 
-def bubu_start_splay(env, asset_cfg, t_end=0.4):
+def bubu_start_splay(env, asset_cfg, t_end=0.4, cap=0.16):
     """First t_end s: pay lateral foot separation (skate push stance), body frame."""
     import torch
     from mjlab.utils.lab_api.math import quat_apply_inverse
@@ -680,7 +695,7 @@ def bubu_start_splay(env, asset_cfg, t_end=0.4):
     q = a.data.root_link_quat_w[:, None, :].expand(-1, p.shape[1], -1)
     pb = quat_apply_inverse(q.reshape(-1, 4), p.reshape(-1, 3)).reshape(p.shape)
     sep = (pb[:, 0, 1] - pb[:, 1, 1]).abs()
-    return (_bubu_t(env) < t_end).float() * torch.clamp(sep, max=0.16)
+    return (_bubu_t(env) < t_end).float() * torch.clamp(sep, max=cap)
 
 
 def bubu_early_speed(env, t_end=0.4):
