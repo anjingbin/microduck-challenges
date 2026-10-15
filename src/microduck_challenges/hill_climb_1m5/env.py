@@ -901,6 +901,19 @@ def make_env_cfg(
         },
     )
 
+    # === bubu-hill: sprint speed shaping (finish at 1.48 m horizontal = 1.5 m along 8 deg) ===
+    from microduck_challenges.sprint_2m.env import (
+        forward_speed_reward, sprint_finish_bonus, sprint_reached, lean_near_finish,
+    )
+    from mjlab.envs.mdp.rewards import is_terminated as _is_terminated
+    cfg.rewards["forward_speed"] = RewardTermCfg(func=forward_speed_reward, weight=5.0, params={"max_speed": 3.0})
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=30.0, params={"length_m": 1.48})
+    cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0, params={"start_m": 1.2, "max_lean": 0.85})
+    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
+    cfg.rewards["track_linear_velocity"].weight = 0.0
+    cfg.terminations["reached"] = TerminationTermCfg(func=sprint_reached, time_out=True, params={"length_m": 1.48})
+    cfg.commands["twist"].ranges.lin_vel_x = (0.15, 1.0)
+    cfg.episode_length_s = 8.0
     return cfg
 
 
@@ -938,7 +951,7 @@ RL_CFG = RslRlOnPolicyRunnerCfg(
     wandb_project="mjlab_microduck",
     experiment_name="hill_climb_1m5",  # logs/rsl_rl/hill_climb_1m5/
     run_name="hill_climb_1m5",
-    save_interval=250,
+    save_interval=25,
     num_steps_per_env=24,
     max_iterations=50_000,
 )
