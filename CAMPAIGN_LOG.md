@@ -193,3 +193,13 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - File: /workspace/imitation/best/bubu-distill-xin-it18.onnx. No GPU fine-tune needed (5/5 reached on CPU). Spend unchanged ~$7.05.
 - NOT published. When approved: publish --base-model Xin-AIAspire/microduck-roller-es2, description must say "distilled from Xin".
 - PUBLISHED bubu-distill-xin (it18) -> dadudu/microduck-bubu-roller rev 62c4f46, base_model Xin-AIAspire/microduck-roller-es2, desc credits Xin. Arena 1.000 s 5/5 @1.6, rank 2/74, run 01M4ZYB8W1PKJYN46SB9QK. Clip: /workspace/arena_compare/bubu_distill.mp4 (1.7 MB).
+
+## HILL (hill-climb-1m5) — recon, $0
+- Event: rig legs (no wheels), lane 1.5 m along an 8 deg slope, 0.8 m wide; STAND start, 0.5 s settle; cmd [vx,0,0] sweep 0.15-1.00 step 0.05
+  on seed 1, 3 finalists x seeds 1-5; fall = tilt>60 deg for 0.3 s; fall/timeout counts 60 s.
+- Board (2026-10-15 22:38): 46 entries / 14 players. #1 namenu strata-hill-he9 0.816 s; #2 juicenv hill-es5 0.820; top-10 cutoff 0.856
+  (namenu x4, juicenv x3, jrubiosainz x2); #11 DenRakEiw 0.860. All top entries offer ONNX. Pollen reference 5.88 s.
+- Leaders' gait: ~1.8 m/s mean uphill (peak 2.2), tilt median 13-18 deg / max ~30 — a sprint gait on a slope.
+- Free baselines: sprint fast10 model_75 13.12 s 4/5 (seed 2 falls at every cmd; others 1.24-1.36 s). Scan of 188 sprint ckpts: 35 are 5/5;
+  best dive1 model_75 1.224 s 5/5, fast8 150/299 1.244, dive2 250 1.252. Roller models (wrong rig): 0/5.
+- Plan: warm-start hill env from dive1-75 / fast8-150 with sprint speed shaping (no distillation).
