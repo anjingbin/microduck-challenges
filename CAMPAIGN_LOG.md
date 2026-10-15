@@ -203,3 +203,10 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Free baselines: sprint fast10 model_75 13.12 s 4/5 (seed 2 falls at every cmd; others 1.24-1.36 s). Scan of 188 sprint ckpts: 35 are 5/5;
   best dive1 model_75 1.224 s 5/5, fast8 150/299 1.244, dive2 250 1.252. Roller models (wrong rig): 0/5.
 - Plan: warm-start hill env from dive1-75 / fast8-150 with sprint speed shaping (no distillation).
+
+### hill1 (job 6ad0edc1c662881452252db3, repo dadudu/mjlab-hillclimb1m5-microduck-20261015-231401)
+- Warm dive1 model_75 (hill 1.224 s 5/5). Hill env + forward_speed w5, finish_bonus @1.48 m w30, lean_near_finish w5 from 1.2 m, fall -20,
+  track_linear_velocity 0, cmd 0.15-1.0, 8 s episodes, ckpt 25. 350 iters; job hit the 28 min cap (stage ERROR) after all ckpts uploaded. ~27.1 min = ~$0.36. Total ~$7.41.
+- RESULT: worse. No trained ckpt reaches 5/5: best 4/5 (model_0 12.96 s, model_50 13.04, 225 13.14, 275 13.16, 75 13.20; finishing seeds ~1.2-1.5 s).
+  Even model_0 (warm weights after the first update) drops to 4/5 -> the policy is knife-edge on Arena seed 2; PPO on the pyramid-slope terrain moved it off.
+- Best hill model remains dive1 model_75 (1.224 s 5/5, untrained on hill). Would rank ~#30/46; top-10 cutoff 0.856 s.
