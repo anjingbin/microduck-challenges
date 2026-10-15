@@ -658,22 +658,27 @@ def make_env_cfg(
     cfg.rewards["early_speed"] = RewardTermCfg(func=bubu_early_speed, weight=4.0, params={"t_end": 0.4})
     cfg.rewards["trunk_height"] = RewardTermCfg(func=bubu_trunk_height, weight=2.0, params={"target": 0.145, "std": 0.02})
     cfg.rewards["foot_clearance"] = RewardTermCfg(func=bubu_foot_clearance, weight=3.0, params={"asset_cfg": feet, "max_lift": 0.12})
-    # === roll4: remove low-glide / small-step shaping, strengthen stride/height/start ===
-    for k in ("com_height_target", "glide", "hip_roll_neutral", "gait_symmetry", "forward_lean"):
-        del cfg.rewards[k]
-    cfg.curriculum.pop("action_rate_weight", None)
-    cfg.rewards["action_rate_l2"].weight = -0.2
-    cfg.rewards["feet_flat"].weight = -0.5
-    cfg.rewards["pose"].weight = 0.5
+    # === roll5: emulate Xin (sim trace: pitch ~32 deg from t=0, bounding, wheels mostly airborne) ===
+    # keeps roll2/3 balance set; drops roll4 removals. forward_lean (15 deg target) conflicts -> removed.
+    del cfg.rewards["forward_lean"]
+    del cfg.rewards["start_splay"]
     cfg.rewards["upright"].weight = 1.0
-    cfg.rewards["single_support"].weight = 1.0
-    cfg.rewards["start_splay"].weight = 20.0
-    cfg.rewards["start_splay"].params["cap"] = 0.20
-    cfg.rewards["early_speed"].weight = 10.0
-    cfg.rewards["trunk_height"].weight = 6.0
-    cfg.rewards["foot_clearance"].weight = 10.0
-    cfg.rewards["foot_clearance"].params["max_lift"] = 0.15
+    cfg.rewards["lean_forward"].params["max_lean"] = 0.6
+    cfg.rewards["pitch_target"] = RewardTermCfg(func=bubu_pitch_target, weight=4.0, params={"target": 0.56, "std": 0.2})
+    cfg.rewards["early_speed"].weight = 6.0
+    cfg.rewards["neck_joint_pos_l2"].weight = -0.1  # Xin throws head forward (neck ~-1.4 rad)
+    cfg.curriculum["bubu_cmd_vx"].params["stages"] = [(0, 0.6), (100 * 24, 1.2), (250 * 24, 2.0)]
     return cfg
+
+
+def bubu_pitch_target(env, target=0.56, std=0.2):
+    """Forward trunk pitch near target (rad) from the very first step."""
+    import torch
+    from mjlab.utils.lab_api.math import quat_apply_inverse
+    a = env.scene["robot"]
+    gx = quat_apply_inverse(a.data.root_link_quat_w, a.data.gravity_vec_w)[:, 0]
+    pitch = torch.asin(torch.clamp(gx, -1.0, 1.0))
+    return torch.exp(-((pitch - target) / std) ** 2)
 
 
 def _bubu_t(env):
