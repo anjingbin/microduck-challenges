@@ -172,3 +172,15 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Best: model_0 2.248 s 5/5 (= warm start re-scored, noise vs 2.264); model_50 2.368 5/5; all others 1-4/5. No real gain.
 - Gait (model_0/50/325): airborne 0% (Xin 43%), lean median 33 deg (unchanged), vx@0.5s 0.59-0.84, trunk z ~0.11, wheel lift <=7 cm.
   The bounding reward never got traction from this warm start; the policy just got less stable.
+
+### Free investigation: rules + CPU imitation feasibility (no HF jobs, $0)
+- Rules: no written clause on imitating/distilling other entries found in the Arena Space README/guides or microduck-challenges
+  README/AGENTS.md. Arena design spec: published policies are downloadable so the platform is "a place to learn from other
+  people's policies"; `publish --base-model` exists for "Remix ... warm start / fine-tune" attribution. No LICENSE on
+  microduck-challenges / microduck-arena GitHub repos (API: none); microduck_rl + mjlab-microduck Apache-2.0 (3D models CC BY-SA-NC).
+  Xin-AIAspire/microduck-roller-es2: no license field/tag in card -> default all rights reserved.
+- Leader robustness: Xin 5/5 on Arena seeds 1-5 @1.6 but 20/30 on seeds 1-30; namenu 10/30 @0.9 -> tuned to the eval seeds.
+- DAgger distillation from Xin ONNX in the Arena's own CPU sim (tools/imitation/dagger.py; MLP 256-256-128; 14 rounds x 30 rollouts, ~7.5 min CPU):
+  best snapshot 5/5 @1.6 on seeds 1-5 in-loop (mean 1.068 s); exported ONNX via `arena score` sweep: 24.43 s, 2/5 @1.5 (fragile).
+  Gait of student: airborne 37% (Xin 43%), first 0.2 s 1.18 m/s (Xin 1.26, roll5 0.56), lean median 26 deg, trunk z median 0.153, wheel lift 7-11 cm.
+  -> bounding transfers by distillation; RL reward shaping (roll3-6) never produced it. Not published.
