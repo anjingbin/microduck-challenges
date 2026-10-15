@@ -152,3 +152,6 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Gait did change toward leaders: trunk z median 0.109 -> 0.140-0.144, wheel lift 2-4 cm -> 4-9 cm (model_100: 13-19 cm but falls at 1.4 s, tilt 115 deg),
   tilt 15 -> 9-13 deg (lean lost). Start speed not better (first 0.2 s 0.35-0.73 vs 0.54-0.48). Policy is taller/higher-stepping but unstable.
 - Takeaway: the removed stabilizers were holding balance; next try should reintroduce them partially or ramp the new terms by curriculum.
+
+### Roller published
+- roll2 model_250 as bubu-roll2-250 -> public dadudu/microduck-bubu-roller (rev 7ab2141); Arena roller-sprint-2m 2.332 s 5/5 @1.5 m/s, rank 53/70, run 01M4Z8QC1T7GF2BMHTX2JQ.
