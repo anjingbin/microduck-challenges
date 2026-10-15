@@ -184,3 +184,11 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   best snapshot 5/5 @1.6 on seeds 1-5 in-loop (mean 1.068 s); exported ONNX via `arena score` sweep: 24.43 s, 2/5 @1.5 (fragile).
   Gait of student: airborne 37% (Xin 43%), first 0.2 s 1.18 m/s (Xin 1.26, roll5 0.56), lean median 26 deg, trunk z median 0.153, wheel lift 7-11 cm.
   -> bounding transfers by distillation; RL reward shaping (roll3-6) never produced it. Not published.
+
+### Distilled-from-Xin student (CPU DAgger, $0)
+- tools/imitation/dagger_robust.py: MLP 512-512-256, 30 rounds x 40 rollouts (25 on Arena seeds 1-5 @1.4-1.8, 8 on seed 1 @1.0-2.0 sweep,
+  7 random seeds), action-noise injection 0.03-0.15, 150-step rollout cap, official arena.evaluate each round from it3. ~29 min CPU.
+- Official `arena score --event roller-sprint-2m`: it18 1.000 s 5/5 @1.6 (best); it7/it20/it24 1.004 s; most rounds 5/5 at 1.00-1.07 s; plateau ~1.00.
+- Gait it18: airborne 46% (Xin 43%), first 0.2 s 1.23 m/s, vx@0.5s 2.00, lean median 33 deg (dives to 127 deg after finish), trunk z 0.150, wheel lift 12-21 cm.
+- File: /workspace/imitation/best/bubu-distill-xin-it18.onnx. No GPU fine-tune needed (5/5 reached on CPU). Spend unchanged ~$7.05.
+- NOT published. When approved: publish --base-model Xin-AIAspire/microduck-roller-es2, description must say "distilled from Xin".
