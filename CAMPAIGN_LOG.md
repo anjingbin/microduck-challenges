@@ -122,3 +122,16 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   - Nearby 5/5: 450 2.728 / 475 2.748 / 825 2.744 / 700 2.748; early 0–175 all 0/5 (40 s timeout).
   - Arena #1 is 1.216 s — we are ~2.2× slower. Stable roller gait from ~225 on.
   - Combined campaign spend ≈ $5.25 of $10.
+
+## roll2 — warm from roll1 model_500 (launched ~11:55 Beijing)
+- Job 6ad04eaf5ccb47ba0f7a4045 RUNNING, l4x1, +500 iters, timeout 2h; ckpt dadudu/mjlab-rollersprint2m-microduck-20261015-115520
+- Warm start roll1 model_500 (2.696 s); cmd vx curriculum 0.6→1.0→1.5; wheel_speed w1; fwd_speed w8; lean_forward w1.5 cap0.5; lean_near_finish w3; LR 1e-4 fixed.
+- Branch bubu-roller commit 27b2702. Auto score via run_roller_round.sh after job completes.
+- Campaign spend before roll2 ≈ $5.25 of $10; roll2 projected ~$0.4–0.6.
+
+### roll2 (job 6ad04eaf5ccb47ba0f7a4045, repo dadudu/mjlab-rollersprint2m-microduck-20261015-115520)
+- Warm from roll1 model_500. cmd vx max curriculum 0.6 -> 1.0 (it100) -> 1.5 (it250); wheel_speed w10->1; forward_speed w8;
+  lean_forward w1.5 cap 0.5; lean_near_finish w3 from 1.6 m. 500 iters, 26.3 min l4x1 (~$0.35). Campaign total ~$5.60.
+- Best: model_250 2.332 s 5/5 (@1.5 m/s). Others 5/5: 425 2.384, 25 2.468, 275 2.472, 450 2.496, 499 2.516. Many mid ckpts unstable (0-4/5).
+- Leader analysis: Xin-AIAspire roller-es2 0.980 s (now #1), namenu strata-roller-re19 1.216 s (#14): trunk z ~0.13-0.15 (ours 0.11),
+  tilt median 30-37 deg with end dive to 81-104 deg, wheels lifted 11-15 cm (big strides), start at 1.1-1.3 m/s. Ours: low glide, 14 deg, 2-6 cm lift.
