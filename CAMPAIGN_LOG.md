@@ -109,3 +109,6 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 ## dive2 — gentle namenu-style lean (launched ~09:17 Beijing)
 - Warm fast10 model_75; +350 iters LR 1e-4 save 25.
 - lean_forward w2 cap 0.42 (~25°); lean_near_finish w5 from 1.7 m; upright 1.0; pose 0.3; fall -25; fell_over 70°; episode 6 s; finish 30.
+- dive2 result: job 6ad02959c662881452249663, 17.5 min running (~$0.3). Best model_25: 1.224 s @0.95, 5/5 (does not beat 1.204). Others 1/5–4/5.
+  - Gait: steady ~24° forward lean (max ~29°), no end dive; finishers ~1.18–1.26 s per seed, but one start falls on most ckpts.
+- Best stays fast10 model_75 (1.204 s). Campaign ≈ $4.65 of $10.
