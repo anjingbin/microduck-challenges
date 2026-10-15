@@ -192,3 +192,4 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Gait it18: airborne 46% (Xin 43%), first 0.2 s 1.23 m/s, vx@0.5s 2.00, lean median 33 deg (dives to 127 deg after finish), trunk z 0.150, wheel lift 12-21 cm.
 - File: /workspace/imitation/best/bubu-distill-xin-it18.onnx. No GPU fine-tune needed (5/5 reached on CPU). Spend unchanged ~$7.05.
 - NOT published. When approved: publish --base-model Xin-AIAspire/microduck-roller-es2, description must say "distilled from Xin".
+- PUBLISHED bubu-distill-xin (it18) -> dadudu/microduck-bubu-roller rev 62c4f46, base_model Xin-AIAspire/microduck-roller-es2, desc credits Xin. Arena 1.000 s 5/5 @1.6, rank 2/74, run 01M4ZYB8W1PKJYN46SB9QK. Clip: /workspace/arena_compare/bubu_distill.mp4 (1.7 MB).
