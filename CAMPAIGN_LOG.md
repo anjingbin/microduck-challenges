@@ -164,3 +164,4 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Best: model_100 2.264 s 5/5 (beats roll2 2.332 by 0.07 s). 25 2.316, 50 2.320 5/5; >=125 degrade (2-4/5).
 - Gait model_100: lean now 33 deg median (roll2 15) — matches Xin's ~30; but still glides on left wheels (contact 76-84%), never airborne,
   trunk z 0.113, wheel lift <=4 cm, first-0.2 s speed 0.56 (Xin 1.26). Leaning alone gave little speed.
+- roll5 model_100 as bubu-roll5-100 -> dadudu/microduck-bubu-roller (rev 8fe9099); Arena 2.264 s 5/5, rank 54/72, run 01M4ZEZ0Q409SGH360X9TA.
