@@ -135,3 +135,10 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Best: model_250 2.332 s 5/5 (@1.5 m/s). Others 5/5: 425 2.384, 25 2.468, 275 2.472, 450 2.496, 499 2.516. Many mid ckpts unstable (0-4/5).
 - Leader analysis: Xin-AIAspire roller-es2 0.980 s (now #1), namenu strata-roller-re19 1.216 s (#14): trunk z ~0.13-0.15 (ours 0.11),
   tilt median 30-37 deg with end dive to 81-104 deg, wheels lifted 11-15 cm (big strides), start at 1.1-1.3 m/s. Ours: low glide, 14 deg, 2-6 cm lift.
+
+### roll3 (job 6ad05cfcc66288145224ba94, repo dadudu/mjlab-rollersprint2m-microduck-20261015-125620)
+- Warm roll2 model_250. + start_splay (foot lateral sep, t<0.4 s, cap 0.16, w10), early_speed (vx t<0.4 s, w4),
+  trunk_height (exp, 0.145 m, std 0.02, w2), foot_clearance (foot z gap cap 0.12, gated vx>0.5, w3). 500 iters, 26.1 min (~$0.35). Total ~$5.95.
+- Best: model_0 2.320 s 5/5 (= warm start re-scored; noise vs 2.332), model_25 2.324 5/5, 175 2.364, 350 2.372, 375 2.416. Late ckpts degrade (1-4/5).
+- Gait vs roll2-250: start vx 0.54 -> 0.44-0.57 m/s, vx@0.5s 0.59 -> 0.62-0.81, trunk z median 0.109 -> 0.114-0.115 (target 0.145 not reached),
+  wheel lift still 2-7 cm, tilt 14-17 deg. Skate splay/stride rewards did not change the gait materially. No improvement.
