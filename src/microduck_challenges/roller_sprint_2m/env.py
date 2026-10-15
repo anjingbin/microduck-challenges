@@ -630,6 +630,18 @@ def make_env_cfg(
             },
         )
 
+    # === bubu-roller speed shaping (reuses sprint_2m helpers) ===
+    from microduck_challenges.sprint_2m.env import (
+        forward_speed_reward, sprint_finish_bonus, sprint_reached,
+    )
+    from mjlab.envs.mdp.rewards import is_terminated as _is_terminated
+    cfg.rewards["forward_speed"] = RewardTermCfg(
+        func=forward_speed_reward, weight=5.0, params={"max_speed": 3.0}
+    )
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=30.0)
+    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
+    cfg.terminations["reached_2m"] = TerminationTermCfg(func=sprint_reached, time_out=True)
+    cfg.episode_length_s = 8.0
     return cfg
 
 
@@ -667,7 +679,7 @@ RL_CFG = RslRlOnPolicyRunnerCfg(
     wandb_project="mjlab_microduck",
     experiment_name="roller_sprint_2m",  # logs/rsl_rl/roller_sprint_2m/
     run_name="roller_sprint_2m",
-    save_interval=250,
+    save_interval=25,
     num_steps_per_env=24,
     max_iterations=50_000,
 )

@@ -112,3 +112,8 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - dive2 result: job 6ad02959c662881452249663, 17.5 min running (~$0.3). Best model_25: 1.224 s @0.95, 5/5 (does not beat 1.204). Others 1/5–4/5.
   - Gait: steady ~24° forward lean (max ~29°), no end dive; finishers ~1.18–1.26 s per seed, but one start falls on most ckpts.
 - Best stays fast10 model_75 (1.204 s). Campaign ≈ $4.65 of $10.
+
+# ROLLER (roller-sprint-2m) — branch bubu-roller
+## roll1 — fresh, 900 iters, l4x1, timeout 2h (launched ~10:05 Beijing)
+- Upstream Mjlab-RollerSprint2m-MicroDuck + forward_speed (w5, cap 3 m/s), finish_bonus (w30, 2 m along spawn heading),
+  reached_2m termination, fall_penalty -20, episode 8 s, save every 25. Command range kept (-0.5..0.6, upstream: >0.6 broke learning).
