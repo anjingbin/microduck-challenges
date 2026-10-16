@@ -901,7 +901,7 @@ def make_env_cfg(
         },
     )
 
-    # === bubu-hill2: exact Arena course + long-stride gait targets ===
+    # === bubu-hill3: exact Arena course + FROM-SCRATCH long-stride (strong) ===
     # Course: flat plane + gravity tilted 8 deg (infinite 8 deg incline), standup
     # collision set (matches Arena's 11 geoms), Arena command-delay ring.
     # Physics patches (Warp single plane-mesh contact + Arena delay) are installed
@@ -952,42 +952,91 @@ def make_env_cfg(
         _math.radians(_deg), _math.radians(_deg)
     )
 
-    # Sprint-style progress + finish. Lean-near-finish REMOVED (dive1 dive habit).
-    # Soft lean_forward targets the leaders' ~12 deg (0.21 rad), not a dive.
+    # === bubu-hill3 FROM SCRATCH: much stronger long-stride shaping ===
+    # Targets: stride ~0.25 m, ~55% flight, ~8 cm clearance, lean ~12°.
+    # Pose / action penalties weakened so they cannot veto big steps.
     if "lean_near_finish" in cfg.rewards:
         del cfg.rewards["lean_near_finish"]
     if "lean_forward" in cfg.rewards:
         del cfg.rewards["lean_forward"]
     cfg.rewards["forward_speed"] = RewardTermCfg(
-        func=forward_speed_reward, weight=5.0, params={"max_speed": 3.0}
+        func=forward_speed_reward, weight=6.0, params={"max_speed": 3.0}
     )
     cfg.rewards["finish_bonus"] = RewardTermCfg(
-        func=sprint_finish_bonus, weight=30.0, params={"length_m": 1.48}
+        func=sprint_finish_bonus, weight=40.0, params={"length_m": 1.48}
     )
-    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
+    cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-25.0)
     cfg.rewards["lean_forward"] = RewardTermCfg(
-        func=lean_forward_reward, weight=2.0, params={"max_lean": 0.21}  # ~12 deg
+        func=lean_forward_reward, weight=3.0, params={"max_lean": 0.21}  # ~12 deg
     )
     cfg.rewards["track_linear_velocity"].weight = 0.0
 
-    # Long-stride gait targets (namenu/juicenv): stride ~0.25 m, ~55% flight,
-    # ~8 cm clearance, weak action penalties.
-    cfg.rewards["air_time"].weight = 3.0
+    # MUCH stronger flight + clearance than hill2 probe (was air w3 / clear w2).
+    cfg.rewards["air_time"].weight = 8.0
     cfg.rewards["air_time"].params["command_threshold"] = 0.05
-    cfg.rewards["air_time"].params["threshold_min"] = 0.10   # ~55% of a ~0.18 s stride
-    cfg.rewards["air_time"].params["threshold_max"] = 0.28
+    cfg.rewards["air_time"].params["threshold_min"] = 0.12  # demand longer swings
+    cfg.rewards["air_time"].params["threshold_max"] = 0.32
     if "foot_clearance" in cfg.rewards:
-        cfg.rewards["foot_clearance"].weight = 2.0
+        cfg.rewards["foot_clearance"].weight = 8.0
         cfg.rewards["foot_clearance"].params["command_threshold"] = 0.05
         cfg.rewards["foot_clearance"].params["target_height"] = 0.08  # 8 cm
-    # Weaken action penalties so large strides are not taxed.
-    cfg.rewards["action_rate_l2"].weight = -0.05
+    if "foot_swing_height" in cfg.rewards:
+        # Soften / retarget swing-height to agree with 8 cm clearance.
+        cfg.rewards["foot_swing_height"].weight = abs(cfg.rewards["foot_swing_height"].weight) * 0.25
+        if "target_height" in (cfg.rewards["foot_swing_height"].params or {}):
+            cfg.rewards["foot_swing_height"].params["target_height"] = 0.08
+
+    # Weaken pose terms that fought long strides / 12° lean in the probe.
+    if "upright" in cfg.rewards:
+        cfg.rewards["upright"].weight = 0.3  # was ~2; fights lean
+    if "pose" in cfg.rewards:
+        cfg.rewards["pose"].weight = 0.2  # was 1.0
+    if "head_pose_tracking" in cfg.rewards:
+        cfg.rewards["head_pose_tracking"].weight = 0.3  # was 2.0
+    if "body_ang_vel" in cfg.rewards:
+        cfg.rewards["body_ang_vel"].weight = min(cfg.rewards["body_ang_vel"].weight, -0.02)
+    if "feet_flat" in cfg.rewards:
+        cfg.rewards["feet_flat"].weight = min(abs(cfg.rewards["feet_flat"].weight), 0.2) * (
+            -1 if cfg.rewards["feet_flat"].weight < 0 else 1
+        )
+        cfg.rewards["feet_flat"].weight = -0.05 if cfg.rewards["feet_flat"].weight < 0 else 0.05
+
+    # Very weak action penalties (probe -0.05 still constrained stride a bit).
+    cfg.rewards["action_rate_l2"].weight = -0.02
     if "action_rate_weight" in cfg.curriculum:
         for st in cfg.curriculum["action_rate_weight"].params["weight_stages"]:
-            st["weight"] = max(st["weight"], -0.15)  # never stronger than -0.15
+            st["weight"] = max(st["weight"], -0.08)  # never stronger than -0.08
     if "joint_torques_l2" in cfg.rewards:
         cfg.rewards["joint_torques_l2"].weight = min(
-            cfg.rewards["joint_torques_l2"].weight, -1e-4
+            cfg.rewards["joint_torques_l2"].weight, -1e-5
+        )
+    # Keep head_pose_bias curriculum off for this short from-scratch run.
+    if "head_pose_bias_weight" in cfg.curriculum:
+        for st in cfg.curriculum["head_pose_bias_weight"].params["weight_stages"]:
+            st["weight"] = 0.0
+
+    # Curriculum: ramp flight/clearance so the gait can boot before full pressure.
+    from mjlab.managers import CurriculumTermCfg as _CurrCfg
+    from mjlab_microduck.tasks import mdp as _microduck_mdp
+    _N = 24  # num_steps_per_env
+    cfg.curriculum["air_time_w"] = _CurrCfg(
+        func=_microduck_mdp.reward_weight,
+        params={"reward_name": "air_time", "weight_stages": [
+            {"step": 0, "weight": 4.0},
+            {"step": 100 * _N, "weight": 8.0},
+            {"step": 250 * _N, "weight": 12.0},
+            {"step": 400 * _N, "weight": 14.0},
+        ]},
+    )
+    if "foot_clearance" in cfg.rewards:
+        cfg.curriculum["clearance_w"] = _CurrCfg(
+            func=_microduck_mdp.reward_weight,
+            params={"reward_name": "foot_clearance", "weight_stages": [
+                {"step": 0, "weight": 3.0},
+                {"step": 100 * _N, "weight": 8.0},
+                {"step": 250 * _N, "weight": 12.0},
+                {"step": 400 * _N, "weight": 14.0},
+            ]},
         )
 
     cfg.terminations["reached"] = TerminationTermCfg(
@@ -1004,7 +1053,7 @@ def make_env_cfg(
         import install_patches as _ip
         _ip.install()
     except Exception as _e:
-        print(f"[hill2] install_patches skipped: {_e}")
+        print(f"[hill3] install_patches skipped: {_e}")
 
     return cfg
 
