@@ -226,3 +226,14 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   official arena score 1.164 s 5/5 @0.30 (dive1 1.224) -> /workspace/hill/es2.onnx. Another 60 iters (es3): no further gain (plateau 1.164).
   Gait unchanged (stride 0.15 m, pitch 26 deg). Rank estimate ~#29/47; top-10 cutoff 0.856.
 - PUBLISHED es2 as bubu-hill-es2 -> dadudu/microduck-bubu-hill rev 277ca30; Arena 1.164 s 5/5 @0.30, run 01M519SMG7MGKC01E2WP53. Hill campaign ended.
+
+### Hill renewed ($20 cap) — step 1 exact env: NOT validated -> no GPU spent
+- tools/hill/hill_exact.py: sprint env + gravity tilted 8 deg (Arena course = floor body rotated -8 deg about y, same thing),
+  spawn yaw +-2 deg and pitch +8 deg (upright w.r.t. gravity like Arena STAND, z ~0.12), Arena timing (policy runs during a 25-step settle,
+  clock/progress start after), finish 1.5 m, fall = tilt>60 deg for 15 steps; eval DR off: actuator vin 7.35 / drop 0.1 (Arena nominal),
+  IMU misalign 0, gyro/gravity obs lag 0, joint_vel lag 1, cmd delay 3-6 substeps (= Arena), same friction/solref/solver 10/20.
+- Results (16 envs @0.30) vs Arena: dive1 12/16 1.46 s (Arena 5/5 1.224); es2 15/16 1.39 s (Arena 5/5 1.164);
+  fast8-150 12/16 1.60 (Arena 5/5 1.244); fast6-100 16/16 1.44 (Arena 5/5 1.260); fast10-75 13/16 1.47 (Arena 4/5 13.1).
+  Times ~20% slow, finish/ranking poorly correlated. Flat check (sprint, 2 m): fast10 16/16 1.29 s vs Arena 1.204 (~7%) -> gap is slope-specific
+  (MuJoCo-Warp vs MuJoCo C contact on incline?), cause not found. Gravity/projected-gravity verified correct.
+- Decision: per plan, no GPU probe until the env validates. Spend unchanged ~$7.41 / $20.
