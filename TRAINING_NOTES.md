@@ -25,3 +25,10 @@ uv run train Mjlab-Sprint2m-MicroDuck --env.scene.num-envs 4096 --agent.max-iter
 - Arena sprint-2m: **4.928 s** mean, 5/5 seeds finished, at 0.55 m/s; rank 49 of 57 entries
   (run https://huggingface.co/spaces/pollen-robotics/microduck-arena#/r/01M4WPNH655Q12YG9TS5PH)
 - Top of board at the time: 0.908 s. Next: try earlier checkpoints (Pollen's best reference was ckpt 1000) and higher speeds.
+
+## Continued on branch `bubu-sprint-fast`
+
+This branch stops at the first run (bubu-first, 4.928 s). The speed campaign that followed lives on
+[`bubu-sprint-fast`](https://github.com/anjingbin/microduck-challenges/tree/bubu-sprint-fast),
+with its reward changes and `CAMPAIGN_LOG.md`. Best there: fast10 model_75, published as
+`bubu-fast10-75`, Arena sprint-2m **1.204 s** 5/5 (run 01M4YCMY86P9EW09FCE6KA).
