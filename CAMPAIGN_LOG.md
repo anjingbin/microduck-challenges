@@ -299,3 +299,25 @@ Lean moved to ~11° (target ~12°); air% nudged up; stride/clearance did **not**
 **Spend:** ~$0.30–0.35 (21 min l4x1). Total campaign ~$7.7 of $20.
 
 **Recommendation: stop this reward recipe.** Exact-course patches work (training ran), but long-stride shaping did not produce a long stride in 400 iters — only a lean change. Confidence of more identical runs beating es2: low (~15%). Better next options if continuing: (a) from-scratch with much stronger stride/flight and weaker pose penalties, ~$1–2; (b) accept dive1/es2 as the hill entry and stop.
+
+## hill3 — from-scratch long-stride (1× l4x1, 2026-10-16 ~16:37–17:10 UTC+8)
+
+**Job:** `6ad1e26a5ccb47ba0f7b0cdf` → `dadudu/mjlab-hillclimb1m5-microduck-20261016-163754`. FROM SCRATCH (no warm). 550 iters, ckpt/25, l4x1, RUN_MIN 29.1. Bootstrap: warp single-contact + Arena delay; standup geoms; exact plane+8° tilt.
+
+**Rewards (vs hill2 probe):** air_time 4→14 curriculum (was fixed 3), clearance 3→14 (was 2), lean_forward w3 @12°, forward_speed w6, finish w40, fall −25; upright 0.3, pose 0.2, head_pose 0.3, action_rate −0.02 (cap −0.08).
+
+**Arena scores:** almost all **0/5 @ 60 s**. Best: **model_300 = 46.448 s (5/5)**, model_325 = 48.928 s (5/5). Far worse than es2 1.164 s / dive1 1.224 s.
+
+**Gait @vx=0.3 (analyze.py):**
+| | stride | air% | clear_cm | pitch_med | act_rate | time |
+|---|---|---|---|---|---|---|
+| namenu | 0.248 | 54 | 8.3 | 14.3 | 1.02 | ~0.82 |
+| es2 | 0.149 | 47 | 5.4 | 25.9 | 0.73 | ~1.16 |
+| **hill3 m300** | **0.004** | **82** | **11.9** | **54.9** | **0.30** | **~56** |
+| hill3 m325 | 0.005 | 84 | 11.7 | 55.1 | 0.32 | ~50 |
+
+Policy learned in-place hopping: huge flight/clearance, almost no forward progress, ~55° pitch. Strong air/clearance rewards dominated and killed locomotion.
+
+**Spend:** ~$0.40 (~29 min l4x1). Total campaign ~$8.1 of $20.
+
+**Recommendation: STOP the hill long-stride line.** Two probes (warm hill2 → lean-only change at 1.236 s; from-scratch hill3 → hop collapse at ~46 s) show reward shaping does not produce namenu's stride on this stack. Keep published dive1 (1.224 s) / do not chase further GPU on this recipe. Remaining budget better saved or used only if a genuinely different approach appears.
