@@ -225,3 +225,4 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   objective = mean time on seeds 1-5 at vx 0.25/0.3/0.35, falls 60 s, shaped). 60 iters ~6 min CPU:
   official arena score 1.164 s 5/5 @0.30 (dive1 1.224) -> /workspace/hill/es2.onnx. Another 60 iters (es3): no further gain (plateau 1.164).
   Gait unchanged (stride 0.15 m, pitch 26 deg). Rank estimate ~#29/47; top-10 cutoff 0.856.
+- PUBLISHED es2 as bubu-hill-es2 -> dadudu/microduck-bubu-hill rev 277ca30; Arena 1.164 s 5/5 @0.30, run 01M519SMG7MGKC01E2WP53. Hill campaign ended.
