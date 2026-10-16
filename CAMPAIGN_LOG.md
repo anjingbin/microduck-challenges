@@ -237,3 +237,15 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   Times ~20% slow, finish/ranking poorly correlated. Flat check (sprint, 2 m): fast10 16/16 1.29 s vs Arena 1.204 (~7%) -> gap is slope-specific
   (MuJoCo-Warp vs MuJoCo C contact on incline?), cause not found. Gravity/projected-gravity verified correct.
 - Decision: per plan, no GPU probe until the env validates. Spend unchanged ~$7.41 / $20.
+
+### Hill slope-gap diagnosis (free, ~1.5 h) — NOT resolved -> hill campaign stops at es2 (1.164 s)
+- MuJoCo C: Arena rotated floor vs flat floor + tilted gravity (+8 deg spawn pitch, tilted WORLD_DOWN for obs/fall): equivalent
+  (es2 1.12-1.22 vs 1.14-1.26; fast6 1.26-1.32 vs 1.22-1.30; dive1 one timeout either way = chaos). Slope emulation is NOT the gap.
+- Step trace es2, no perturbation, vx 0.3 (tools/hill/trace_both.py): obs identical at step 0 except mjlab command (0.38 at reset; head/body
+  command slots random up to 0.057 vs 0). Fixed in eval (zero head/body cmds, constant vx) -> still es2 14/16 1.43 s, dive1 12/16 1.50, fast6 16/16 1.48.
+  Joint velocities diverge from step 2-3 (mjlab knee 0.31 vs Arena 1.64 rad/s at step 3: sluggish actuation in mjlab).
+- Checked equal: friction/solref/condim, solver 10/20, implicitfast, dt, spawn z 0.119, gravity + projected gravity, current limit (1.75 A in both),
+  vin 7.35/drop 0.1, kp/kd/friction scales 1.0, joint solref/solimp friction.
+- Arena is very sensitive to command delay (fixed 3: es2 4/5; fixed 6: fast6 1/5; fixed 8: both mostly fail). mjlab uses a per-env-phase
+  delay buffer (3-6) vs Arena's per-substep draw — remaining prime suspect, plus MuJoCo-Warp vs MuJoCo C. Not resolved in the time box.
+- No GPU, no publish. Spend ~$7.41 / $20.

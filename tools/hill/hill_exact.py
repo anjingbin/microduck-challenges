@@ -46,6 +46,9 @@ def eval_onnx(path, vx=0.3, n=16, T=4.5, settle=25):
     import onnxruntime as ort
     sess = ort.InferenceSession(path, providers=['CPUExecutionProvider'])
     cfg = make_cfg(n); cfg.episode_length_s = 20.0
+    for k in ('head_pose', 'body_pose'): cfg.commands[k].zero_command_prob = 1.0
+    cfg.commands['twist'].ranges.lin_vel_x = (vx, vx); cfg.commands['twist'].rel_standing_envs = 0.0
+    cfg.commands['twist'].rel_forward_envs = 1.0; cfg.commands['twist'].resampling_time_range = (100.0, 100.0)
     cfg.terminations.pop('reached_2m', None); cfg.terminations.pop('time_out', None)
     env = make_env(cfg); obs, _ = env.reset()
     rob = env.scene['robot']
