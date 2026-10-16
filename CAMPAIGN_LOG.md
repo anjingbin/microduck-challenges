@@ -266,3 +266,36 @@ Validation (16 seeds per command, Arena `run_once` fixed vx vs hill_exact with a
 | flat sprint fast10 m75 | 0.3/0.6/1.0 | 14,15,14 · 1.236/1.232/1.229 | 16,16,16 · 1.206/1.214/1.204 | — |
 Times now land within about 1–5.5% (before: about 20–25% too slow), and the ranking es2 < dive1 < fast6 matches. Finish rates still match only partly: mjlab is optimistic for fragile policies (fast6 100% vs 56–75%, es2 88% vs 69–75%). dive1 matches.
 Note: every earlier sprint/roller/hill training run had mismatches 1–3. GPU training needs `apply_warp_patch.sh` plus `ARENA_SINGLE_CONTACT=1 ARENA_DELAY=1` in the job.
+
+## hill2 — exact-course probe (free smoke + 1× l4x1, 2026-10-16 ~16:00–16:40 UTC+8)
+
+**FREE smoke:** `ARENA_SINGLE_CONTACT=1 ARENA_DELAY=1`, standup collisions, flat+8° tilted gravity, gait rewards. CPU train 3 iters @16 envs OK.
+
+**Job:** `6ad1da64c66288145225a07f` → `dadudu/mjlab-hillclimb1m5-microduck-20261016-160342`. Warm `dive1 model_75`. 400 iters, ckpt/25, l4x1, 21.1 run min. Bootstrap applied warp single-contact patch + Arena delay. (First submit `6ad1da4e5ccb47ba0f7b02cd` cancelled before run — bootstrap inject missed; no GPU time.)
+
+**Rewards:** forward_speed w5, finish_bonus w30, fall_penalty −20, lean_forward max 0.21 (~12°) w2 (lean_near_finish removed), air_time w3 [0.10,0.28]s, foot_clearance target 0.08 m w2, action_rate −0.05 (cap −0.15). Exact course plane+tilt; standup 11-geom robot.
+
+**Arena scores (hill-climb-1m5):**
+| ckpt | score | finishes |
+|---|---|---|
+| model_0 | 12.992 | 4/5 (warm collapse on new physics) |
+| model_175/225 | 1.284 | 5/5 |
+| **model_300** | **1.236** | **5/5** ← best |
+| model_325/350 | 1.244/1.240 | 5/5 |
+| model_399 | 1.292 | 5/5 |
+| dive1 baseline | 1.224 | 5/5 |
+| es2 | 1.164 | 5/5 |
+
+**Gait @vx=0.3 (seed 3):**
+| | stride | air% | clear_cm | pitch_med | act_rate |
+|---|---|---|---|---|---|
+| namenu #1 | 0.248 | 54 | 8.3 | 14.3 | 1.02 |
+| es2 | 0.149 | 47 | 5.4 | 25.9 | 0.73 |
+| dive1 | 0.149 | 46 | 5.3 | 26.6 | 0.69 |
+| **hill2 m300** | **0.166** | **51** | **4.9** | **10.6** | **0.67** |
+
+Lean moved to ~11° (target ~12°); air% nudged up; stride/clearance did **not** reach namenu (still dive1-like short steps). Time 1.236 ≈ dive1, worse than es2 1.164.
+
+**Spend:** ~$0.30–0.35 (21 min l4x1). Total campaign ~$7.7 of $20.
+
+**Recommendation: stop this reward recipe.** Exact-course patches work (training ran), but long-stride shaping did not produce a long stride in 400 iters — only a lean change. Confidence of more identical runs beating es2: low (~15%). Better next options if continuing: (a) from-scratch with much stronger stride/flight and weaker pose penalties, ~$1–2; (b) accept dive1/es2 as the hill entry and stop.
