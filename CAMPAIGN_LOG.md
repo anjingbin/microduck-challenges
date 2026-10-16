@@ -211,3 +211,17 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
   Even model_0 (warm weights after the first update) drops to 4/5 -> the policy is knife-edge on Arena seed 2; PPO on the pyramid-slope terrain moved it off.
 - Best hill model remains dive1 model_75 (1.224 s 5/5, untrained on hill). Would rank ~#30/46; top-10 cutoff 0.856 s.
 - PUBLISHED dive1 model_75 as bubu-hill-dive1-75 -> public dadudu/microduck-bubu-hill rev de63112; Arena hill-climb-1m5 1.224 s 5/5 @0.30, rank 30/47, run 01M505E13TNZ7ZY8P92DA1. Hill campaign stopped. Total spend ~$7.41.
+
+### Hill restart — free CPU study (no jobs, $0)
+- Gait (tools/hill/analyze.py, seeds 1-5 @0.30, contacts from MuJoCo): leaders namenu/juicenv vs our dive1-75:
+  cadence 7.3 vs 7.9 Hz; stride 0.25 vs 0.15 m; both-feet-airborne 54-59% vs 46%; foot clearance (p95) 7-8 vs 5 cm;
+  trunk pitch median 10-14 vs 27 deg (max ~28 vs 33); speed 1.34->2.0 m/s vs flat ~1.15-1.3; mean |action| 1.8-2.2 vs 1.2,
+  mean |d action| 1.0-1.1 vs 0.7; per-joint action range 6-10 vs 2-7. Targets: longer stride (~0.25 m), more flight (~55%),
+  ~8 cm clearance, LESS lean (~12 deg), much weaker action-rate/magnitude penalties.
+- Exact course env (tools/hill/hill_exact.py): sprint env + gravity tilted 8 deg (== infinite incline), yaw +-2 deg, finish 1.5 m, no DR.
+  Runs on CPU, but dive1 there: 8/16 finish ~1.9 s, no falls — not yet matched to the Arena (Arena clock starts after a 0.5 s moving settle,
+  spawn differs). Not validated -> not used for training.
+- ES fine-tune of dive1's own weights in the Arena hill sim (tools/hill/es_hill.py; antithetic, POP 24, sigma 0.001*std, lr 3e-4,
+  objective = mean time on seeds 1-5 at vx 0.25/0.3/0.35, falls 60 s, shaped). 60 iters ~6 min CPU:
+  official arena score 1.164 s 5/5 @0.30 (dive1 1.224) -> /workspace/hill/es2.onnx. Another 60 iters (es3): no further gain (plateau 1.164).
+  Gait unchanged (stride 0.15 m, pitch 26 deg). Rank estimate ~#29/47; top-10 cutoff 0.856.
