@@ -901,19 +901,111 @@ def make_env_cfg(
         },
     )
 
-    # === bubu-hill: sprint speed shaping (finish at 1.48 m horizontal = 1.5 m along 8 deg) ===
+    # === bubu-hill2: exact Arena course + long-stride gait targets ===
+    # Course: flat plane + gravity tilted 8 deg (infinite 8 deg incline), standup
+    # collision set (matches Arena's 11 geoms), Arena command-delay ring.
+    # Physics patches (Warp single plane-mesh contact + Arena delay) are installed
+    # by tools/hill/install_patches.py when ARENA_SINGLE_CONTACT / ARENA_DELAY are set.
+    import math as _math
+    import dataclasses as _dc
+    from mjlab_microduck.robot.microduck_constants import (
+        MICRODUCK_STANDUP_ROBOT_CFG, get_standup_spec,
+    )
     from microduck_challenges.sprint_2m.env import (
-        forward_speed_reward, sprint_finish_bonus, sprint_reached, lean_near_finish,
+        forward_speed_reward, sprint_finish_bonus, sprint_reached, lean_forward_reward,
     )
     from mjlab.envs.mdp.rewards import is_terminated as _is_terminated
-    cfg.rewards["forward_speed"] = RewardTermCfg(func=forward_speed_reward, weight=5.0, params={"max_speed": 3.0})
-    cfg.rewards["finish_bonus"] = RewardTermCfg(func=sprint_finish_bonus, weight=30.0, params={"length_m": 1.48})
-    cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0, params={"start_m": 1.2, "max_lean": 0.85})
+
+    # Exact course: flat plane, gravity tilted 8 deg uphill = +x.
+    _deg = 8.0
+    _s8, _c8 = _math.sin(_math.radians(_deg)), _math.cos(_math.radians(_deg))
+    cfg.scene.terrain.terrain_type = "plane"
+    cfg.scene.terrain.terrain_generator = None
+    cfg.scene.spec_fn = None  # no soft-contact override on a plane
+    # Drop generator-only curricula (terrain_levels asserts terrain_generator).
+    for _k in list(cfg.curriculum):
+        if "terrain" in _k:
+            del cfg.curriculum[_k]
+    if "out_of_terrain_bounds" in cfg.terminations:
+        del cfg.terminations["out_of_terrain_bounds"]
+    cfg.sim.mujoco.gravity = (-9.81 * _s8, 0.0, -9.81 * _c8)
+    # Keep observation gravity vector aligned with sim gravity (mjlab defaults to -z).
+    def _sync_gravity_vec(env, env_ids=None, s8=_s8, c8=_c8):
+        import torch
+        g = torch.tensor([-s8, 0.0, -c8], device=env.device, dtype=torch.float32)
+        ids = slice(None) if env_ids is None else env_ids
+        env.scene["robot"].data.gravity_vec_w[ids] = g
+    from mjlab.managers import EventTermCfg as _EventTermCfg
+    cfg.events["bubu_sync_gravity"] = _EventTermCfg(
+        func=_sync_gravity_vec, mode="startup",
+    )
+    cfg.events["bubu_sync_gravity_reset"] = _EventTermCfg(
+        func=_sync_gravity_vec, mode="reset",
+    )
+    # Arena collision set (11 geoms: trunk, hips, legs, jaw, feet).
+    cfg.scene.entities = {"robot": MICRODUCK_STANDUP_ROBOT_CFG}
+    cfg.sim.nconmax = max(cfg.sim.nconmax or 0, 64)
+
+    # Spawn: upright w.r.t. gravity (pitch = 8 deg) + Arena yaw +-2 deg.
+    cfg.events["reset_base"].params["pose_range"]["yaw"] = (-0.035, 0.035)
+    cfg.events["reset_base"].params["pose_range"]["pitch"] = (
+        _math.radians(_deg), _math.radians(_deg)
+    )
+
+    # Sprint-style progress + finish. Lean-near-finish REMOVED (dive1 dive habit).
+    # Soft lean_forward targets the leaders' ~12 deg (0.21 rad), not a dive.
+    if "lean_near_finish" in cfg.rewards:
+        del cfg.rewards["lean_near_finish"]
+    if "lean_forward" in cfg.rewards:
+        del cfg.rewards["lean_forward"]
+    cfg.rewards["forward_speed"] = RewardTermCfg(
+        func=forward_speed_reward, weight=5.0, params={"max_speed": 3.0}
+    )
+    cfg.rewards["finish_bonus"] = RewardTermCfg(
+        func=sprint_finish_bonus, weight=30.0, params={"length_m": 1.48}
+    )
     cfg.rewards["fall_penalty"] = RewardTermCfg(func=_is_terminated, weight=-20.0)
+    cfg.rewards["lean_forward"] = RewardTermCfg(
+        func=lean_forward_reward, weight=2.0, params={"max_lean": 0.21}  # ~12 deg
+    )
     cfg.rewards["track_linear_velocity"].weight = 0.0
-    cfg.terminations["reached"] = TerminationTermCfg(func=sprint_reached, time_out=True, params={"length_m": 1.48})
+
+    # Long-stride gait targets (namenu/juicenv): stride ~0.25 m, ~55% flight,
+    # ~8 cm clearance, weak action penalties.
+    cfg.rewards["air_time"].weight = 3.0
+    cfg.rewards["air_time"].params["command_threshold"] = 0.05
+    cfg.rewards["air_time"].params["threshold_min"] = 0.10   # ~55% of a ~0.18 s stride
+    cfg.rewards["air_time"].params["threshold_max"] = 0.28
+    if "foot_clearance" in cfg.rewards:
+        cfg.rewards["foot_clearance"].weight = 2.0
+        cfg.rewards["foot_clearance"].params["command_threshold"] = 0.05
+        cfg.rewards["foot_clearance"].params["target_height"] = 0.08  # 8 cm
+    # Weaken action penalties so large strides are not taxed.
+    cfg.rewards["action_rate_l2"].weight = -0.05
+    if "action_rate_weight" in cfg.curriculum:
+        for st in cfg.curriculum["action_rate_weight"].params["weight_stages"]:
+            st["weight"] = max(st["weight"], -0.15)  # never stronger than -0.15
+    if "joint_torques_l2" in cfg.rewards:
+        cfg.rewards["joint_torques_l2"].weight = min(
+            cfg.rewards["joint_torques_l2"].weight, -1e-4
+        )
+
+    cfg.terminations["reached"] = TerminationTermCfg(
+        func=sprint_reached, time_out=True, params={"length_m": 1.48}
+    )
     cfg.commands["twist"].ranges.lin_vel_x = (0.15, 1.0)
     cfg.episode_length_s = 8.0
+
+    # Install Arena physics patches (no-op if env vars unset; HF job sets them).
+    try:
+        from pathlib import Path as _P
+        import sys as _sys
+        _sys.path.insert(0, str(_P(__file__).resolve().parents[3] / "tools" / "hill"))
+        import install_patches as _ip
+        _ip.install()
+    except Exception as _e:
+        print(f"[hill2] install_patches skipped: {_e}")
+
     return cfg
 
 
