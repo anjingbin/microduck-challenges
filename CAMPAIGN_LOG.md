@@ -249,3 +249,20 @@ Budget: <= $10 HF Jobs total. Spent so far: fast1 ~$0.6 (bubu-first ~$1.8 was be
 - Arena is very sensitive to command delay (fixed 3: es2 4/5; fixed 6: fast6 1/5; fixed 8: both mostly fail). mjlab uses a per-env-phase
   delay buffer (3-6) vs Arena's per-substep draw — remaining prime suspect, plus MuJoCo-Warp vs MuJoCo C. Not resolved in the time box.
 - No GPU, no publish. Spend ~$7.41 / $20.
+
+## hill-climb-1m5: slope-gap diagnosis, part 2 (free, 2026-10-16 ~15:20–17:00 UTC+8)
+Three sim mismatches between mjlab training (MuJoCo Warp) and the Arena (MuJoCo C) were found and fixed in `tools/hill/hill_exact.py`:
+1. **Command delay / reset.** The Arena calls `Servos.drive` 5x per control step (4 in-loop + 1 after) on a depth-7 ring, with lag ~U{3..6} per call. Its reset backfills the ring with **0 rad** targets. `tools/hill/arena_delay.py` reproduces this exactly in mjlab (in-loop substep j: current target if L<=j, previous if L<=j+5, else 2 back; the post-reset write backfills with mjlab's zeroed `joint_pos_target`). With a fixed lag in both sims, the step-2 gyro kick now matches (2.2 vs 2.2 rad/s; before: 2.2 vs -1.0).
+2. **Collision geoms.** The Arena uses robot_allcollisions.xml stripped to 11 geoms (trunk, hips, legs, head can hit the floor). Training used robot_walk.xml (5 geoms, only the feet hit the floor). `hill_exact` now uses `get_standup_spec`, which matches the Arena's 11 geoms exactly (`ARENA_GEOMS=1`, default).
+3. **Contacts (the main one).** For mesh foot vs plane, MuJoCo C makes **1 contact (deepest point)** and MuJoCo Warp makes **up to 4** (a flat-foot patch). Stepping identical states: C vs Warp diverge 0.13–0.59 rad/s per control step in contact and agree to 1e-4 out of contact. `tools/hill/warp_single_contact.patch` (+ `apply_warp_patch.sh`, `ARENA_SINGLE_CONTACT=1`) keeps only the deepest contact, after which C vs Warp agree to 1e-4 in single-foot contact (double-support snaps still differ about 0.2).
+Ruled out: torque law (identical to 1e-5), forcerange 0.957 vs 1.068 N·m (never binds), tilted gravity vs rotated floor (identical in C), solver options, masses/inertias.
+
+Validation (16 seeds per command, Arena `run_once` fixed vx vs hill_exact with all fixes; finish count / mean time):
+| policy | vx | Arena | hill_exact (fixed) | before fixes |
+|---|---|---|---|---|
+| dive1 m75 | 0.3/0.6/1.0 | 15,15,16 · 1.235/1.236/1.276 | 16,16,16 · 1.248/1.263/1.271 | ~1.51–1.55 |
+| es2 | 0.3/0.6/1.0 | 11,12,12 · 1.198/1.262/1.197 | 14,14,14 · 1.224/1.213/1.263 | ~1.41–1.54 |
+| fast6 m100 | 0.3/0.6/1.0 | 11,12,9 · 1.291/1.402/1.280 | 16,16,16 · 1.330/1.333/1.299 | ~1.45–1.53 |
+| flat sprint fast10 m75 | 0.3/0.6/1.0 | 14,15,14 · 1.236/1.232/1.229 | 16,16,16 · 1.206/1.214/1.204 | — |
+Times now land within about 1–5.5% (before: about 20–25% too slow), and the ranking es2 < dive1 < fast6 matches. Finish rates still match only partly: mjlab is optimistic for fragile policies (fast6 100% vs 56–75%, es2 88% vs 69–75%). dive1 matches.
+Note: every earlier sprint/roller/hill training run had mismatches 1–3. GPU training needs `apply_warp_patch.sh` plus `ARENA_SINGLE_CONTACT=1 ARENA_DELAY=1` in the job.

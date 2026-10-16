@@ -12,6 +12,10 @@ DIST = float(os.environ.get('DIST', 1.5))
 def make_cfg(n, train=False, rew=None):
     c = load_env_cfg('Mjlab-Sprint2m-MicroDuck'); c.scene.num_envs = n
     c.sim.mujoco.gravity = (-9.81 * S8, 0.0, -9.81 * C8)
+    if os.environ.get('ARENA_GEOMS', '1') == '1':  # Arena builds robot_allcollisions.xml stripped to 11 geoms == mjlab standup spec
+        import dataclasses as _dc; from mjlab_microduck.robot.microduck_constants import get_standup_spec
+        c.scene.entities['robot'] = _dc.replace(c.scene.entities['robot'], spec_fn=get_standup_spec)
+        c.sim.nconmax = max(c.sim.nconmax or 0, 64)
     c.events['reset_base'].params['pose_range']['yaw'] = (-0.035, 0.035)
     c.events['reset_base'].params['pose_range']['pitch'] = (math.radians(DEG), math.radians(DEG))  # upright w.r.t. gravity, as on the Arena slope
     c.commands['twist'].ranges.lin_vel_x = (0.15, 1.0)
@@ -37,6 +41,8 @@ def make_cfg(n, train=False, rew=None):
     return c
 
 def make_env(cfg):
+    if os.environ.get('ARENA_DELAY'):
+        import arena_delay; arena_delay.install(lo=int(os.environ.get('AD_LO',3)), hi=int(os.environ.get('AD_HI',6))) if not getattr(arena_delay, '_done', False) else None; arena_delay._done = True
     e = ManagerBasedRlEnv(cfg, device='cpu')
     e.scene['robot'].data.gravity_vec_w[:] = torch.tensor([-S8, 0.0, -C8])
     return e
