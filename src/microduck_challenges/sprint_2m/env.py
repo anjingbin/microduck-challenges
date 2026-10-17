@@ -140,12 +140,6 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
     return torch.atan2(torch.sin(error), torch.cos(error)).unsqueeze(-1)
 
 
-def forward_speed(env: ManagerBasedRlEnv, max_speed: float = 4.0) -> torch.Tensor:
-    """Raw forward body-frame speed, whatever the command says: the race is won on speed."""
-    vx = env.scene["robot"].data.root_link_lin_vel_b[:, 0]
-    return torch.clamp(vx, min=-1.0, max=max_speed)
-
-
 def _progress(env: ManagerBasedRlEnv) -> torch.Tensor:
     """Distance along the spawn heading, as the Arena measures the race."""
     asset = env.scene["robot"]
@@ -161,6 +155,17 @@ def _progress(env: ManagerBasedRlEnv) -> torch.Tensor:
         env._sprint_start[fresh] = pos[fresh]
         env._sprint_dir[fresh] = torch.stack([torch.cos(yaw), torch.sin(yaw)], dim=-1)[fresh]
     return torch.sum((pos - env._sprint_start) * env._sprint_dir, dim=-1)
+
+
+def forward_speed(env: ManagerBasedRlEnv, max_speed: float = 4.0) -> torch.Tensor:
+    """Speed along the spawn heading, whatever the command says: the race is won on speed.
+
+    Measured on the lane, not in the trunk's frame: a trunk twisting ±30° to balance a long
+    stride still pays in full, and a policy running diagonally does not.
+    """
+    _progress(env)  # captures the spawn heading on reset
+    vel = env.scene["robot"].data.root_link_lin_vel_w[:, :2]
+    return torch.clamp(torch.sum(vel * env._sprint_dir, dim=-1), min=-1.0, max=max_speed)
 
 
 def finish_bonus(env: ManagerBasedRlEnv, length_m: float = 2.0) -> torch.Tensor:
@@ -351,7 +356,9 @@ def make_env_cfg(
     cfg.rewards["heading_hold"] = RewardTermCfg(
         func=microduck_mdp.heading_hold_reward,
         weight=1.0,
-        params={"std": 0.4, "asset_cfg": SceneEntityCfg("robot")},
+        # std 1.0 rad, not 0.4: the fastest sprinters twist the trunk -49..+13° each stride
+        # to balance the swinging legs, and still run straight (1.5 cm off line at 2 m).
+        params={"std": 1.0, "asset_cfg": SceneEntityCfg("robot")},
     )
 
     # Action smoothness: stage-0 value; the action_rate_weight curriculum below
