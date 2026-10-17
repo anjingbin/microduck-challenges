@@ -352,9 +352,8 @@ def make_env_cfg(
         params={"std": 0.4, "asset_cfg": SceneEntityCfg("robot")},
     )
 
-    # Action smoothness: stage-0 value; the action_rate_weight curriculum below
-    # ramps it -0.1 → -1.0 by iter 1500.
-    cfg.rewards["action_rate_l2"].weight = -0.1
+    # Action smoothness: held by the action_rate_weight curriculum below.
+    cfg.rewards["action_rate_l2"].weight = -0.05
 
     cfg.rewards["foot_clearance"].params["command_threshold"] = 0.01
     cfg.rewards["foot_clearance"].params["target_height"] = 0.02  # Increased from 0.01 to penalize dragging
@@ -750,16 +749,14 @@ def make_env_cfg(
     cfg.scene.terrain.terrain_type = "plane"
     cfg.scene.terrain.terrain_generator = None
 
-    # action_rate weight ramp: gentle smoothing while the gait bootstraps, then
-    # tighten to -1.0 by iter 1500.
+    # action_rate held at -0.05: at -0.3 it cost nearly as much as forward_speed paid
+    # (nb2: -1.42 vs +1.75 per episode) and capped the cadence a sprint needs.
     cfg.curriculum["action_rate_weight"] = CurriculumTermCfg(
         func=microduck_mdp.reward_weight,
         params={
             "reward_name": "action_rate_l2",
             "weight_stages": [
-                {"step": 0, "weight": -0.1},
-                {"step": 500 * NUM_STEPS_PER_ENV, "weight": -0.2},
-                {"step": 750 * NUM_STEPS_PER_ENV, "weight": -0.3},
+                {"step": 0, "weight": -0.05},
             ],
         },
     )
@@ -848,10 +845,12 @@ def make_env_cfg(
 
     # Race shaping (from the bubu-sprint-fast campaign: speed over command tracking).
     # forward_speed is the task reward; track_linear_velocity drops to its knob's floor.
+    # An episode ends at 2 m, so forward_speed summed over it is ~2 m whatever the pace:
+    # finish_bonus's time term is what pays for arriving sooner.
     cfg.rewards["forward_speed"] = RewardTermCfg(func=forward_speed, weight=5.0, params={"max_speed": 4.0})
     cfg.rewards["pose"].weight = 0.3
     cfg.rewards["fall_penalty"] = RewardTermCfg(func=mdp.is_terminated, weight=-25.0)
-    cfg.rewards["finish_bonus"] = RewardTermCfg(func=finish_bonus, weight=30.0)
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=finish_bonus, weight=60.0)
     cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0, params={"start_m": 1.7})
     cfg.terminations["reached_finish"] = TerminationTermCfg(func=reached_finish, time_out=True)
     cfg.episode_length_s = 6.0
