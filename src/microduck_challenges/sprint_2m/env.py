@@ -293,7 +293,9 @@ def make_env_cfg(
     # level in steady gait while transient lean (push recovery, accel) stays
     # affordable.
     cfg.rewards["upright"].weight = knobs["upright_reward"]
-    cfg.rewards["upright"].params["std"] = math.sqrt(0.1)
+    # Wide: the fastest entries run leaning ~18° and rolling up to ~50° (2026-10-17 gait
+    # comparison against suraj-phanindra/microduck-sprint-hc5-aifund).
+    cfg.rewards["upright"].params["std"] = math.sqrt(0.3)
 
     # Foot-specific configurations. In mjlab 1.3.0 foot_swing_height is fully
     # sensor-driven (no asset_cfg); only foot_clearance/foot_slip still carry an
@@ -325,11 +327,11 @@ def make_env_cfg(
     # air_time rewards each foot's swing time inside a window (set below).
     cfg.rewards["air_time"].weight = knobs["step_reward"]
     cfg.rewards["air_time"].params["command_threshold"] = 0.01
-    # A short window: the fastest entries run at a quick cadence, not long strides.
-    cfg.rewards["air_time"].params["threshold_min"] = 0.05
-    cfg.rewards["air_time"].params["threshold_max"] = 0.20
+    # A long window: the fastest entries win on stride (0.74 m) at ~3.3 strides/s, not cadence.
+    cfg.rewards["air_time"].params["threshold_min"] = 0.10
+    cfg.rewards["air_time"].params["threshold_max"] = 0.35
 
-    cfg.rewards["body_ang_vel"].weight = -0.05
+    cfg.rewards["body_ang_vel"].weight = -0.01  # a long stride rolls the trunk
     cfg.rewards["angular_momentum"].weight = -0.02
 
     # Velocity tracking rewards
@@ -352,8 +354,9 @@ def make_env_cfg(
         params={"std": 0.4, "asset_cfg": SceneEntityCfg("robot")},
     )
 
-    # Action smoothness: held by the action_rate_weight curriculum below.
-    cfg.rewards["action_rate_l2"].weight = -0.05
+    # Action smoothness: stage-0 value; the action_rate_weight curriculum below
+    # ramps it -0.1 → -0.3 by iter 750.
+    cfg.rewards["action_rate_l2"].weight = -0.1
 
     cfg.rewards["foot_clearance"].params["command_threshold"] = 0.01
     cfg.rewards["foot_clearance"].params["target_height"] = 0.02  # Increased from 0.01 to penalize dragging
@@ -710,7 +713,7 @@ def make_env_cfg(
     # (no all-or-nothing).
     cfg.rewards["head_pose_tracking"] = RewardTermCfg(
         func=microduck_mdp.head_pose_tracking,
-        weight=2.0,
+        weight=0.5,  # light: the fastest sprinters drop the neck (~-0.8 rad) as a counterweight
         params={"command_name": "head_pose", "std": 0.5},
     )
     # body_pose: infra kept intact but DISABLED (weight 0) — the obs slot and
@@ -749,14 +752,16 @@ def make_env_cfg(
     cfg.scene.terrain.terrain_type = "plane"
     cfg.scene.terrain.terrain_generator = None
 
-    # action_rate held at -0.05: at -0.3 it cost nearly as much as forward_speed paid
-    # (nb2: -1.42 vs +1.75 per episode) and capped the cadence a sprint needs.
+    # action_rate ramp: gentle smoothing while the gait bootstraps, then -0.3 (nb3
+    # held it at -0.05: the actions grew ~6x jerkier and the policy slower and less stable).
     cfg.curriculum["action_rate_weight"] = CurriculumTermCfg(
         func=microduck_mdp.reward_weight,
         params={
             "reward_name": "action_rate_l2",
             "weight_stages": [
-                {"step": 0, "weight": -0.05},
+                {"step": 0, "weight": -0.1},
+                {"step": 500 * NUM_STEPS_PER_ENV, "weight": -0.2},
+                {"step": 750 * NUM_STEPS_PER_ENV, "weight": -0.3},
             ],
         },
     )
@@ -826,31 +831,17 @@ def make_env_cfg(
     del cfg.curriculum["terrain_levels"]
     del cfg.curriculum["command_vel"]
 
-    # head_pose_bias ramp: OFF until iter 600, then 1.0 → 3.0 by iter 1500.
-    # Held at 0 early because a posture-precision term is a distraction before
-    # a gait exists. At weight 3.0 a 15° residual bias costs 0.79/step and a
-    # 2° bias costs 0.10/step.
-    cfg.curriculum["head_pose_bias_weight"] = CurriculumTermCfg(
-        func=microduck_mdp.reward_weight,
-        params={
-            "reward_name": "head_pose_bias",
-            "weight_stages": [
-                {"step": 0, "weight": 0.0},
-                {"step": 600 * NUM_STEPS_PER_ENV, "weight": 1.0},
-                {"step": 1000 * NUM_STEPS_PER_ENV, "weight": 2.0},
-                {"step": 1500 * NUM_STEPS_PER_ENV, "weight": 3.0},
-            ],
-        },
-    )
+    # No head_pose_bias ramp: the head droop it prices is the counterweight the fastest
+    # sprinters use (neck ~-0.8 rad); head_pose_bias stays at weight 0.
 
     # Race shaping (from the bubu-sprint-fast campaign: speed over command tracking).
     # forward_speed is the task reward; track_linear_velocity drops to its knob's floor.
     # An episode ends at 2 m, so forward_speed summed over it is ~2 m whatever the pace:
     # finish_bonus's time term is what pays for arriving sooner.
     cfg.rewards["forward_speed"] = RewardTermCfg(func=forward_speed, weight=5.0, params={"max_speed": 4.0})
-    cfg.rewards["pose"].weight = 0.3
+    cfg.rewards["pose"].weight = 0.0  # a long stride swings every leg joint far from home
     cfg.rewards["fall_penalty"] = RewardTermCfg(func=mdp.is_terminated, weight=-25.0)
-    cfg.rewards["finish_bonus"] = RewardTermCfg(func=finish_bonus, weight=60.0)
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=finish_bonus, weight=30.0)
     cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0, params={"start_m": 1.7})
     cfg.terminations["reached_finish"] = TerminationTermCfg(func=reached_finish, time_out=True)
     cfg.episode_length_s = 6.0
