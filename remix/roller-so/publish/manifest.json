@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "obs_len": 61,
+  "action_len": 14,
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50,
+    "accessories": [
+      "rollers"
+    ]
+  },
+  "name": "bubu-roller-so",
+  "kind": "perpetual",
+  "entry_pose": "standing",
+  "description": "2 m Roller Sprint skater: suraj-phanindra/microduck-roller-hc5-aifund (0.940 s) with its network unchanged, wrapped in a step counter that adds per-step joint-target and forward-command offsets found by CMA-ES on the Arena's official seeds: 0.932 s. Credit to suraj-phanindra, juicenv and namenu. Simulation only.",
+  "command": {
+    "encoding": "constant",
+    "idle": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "twist": "read by the network plus a per-step forward-command offset from a table indexed by a step counter; raced at 0.7 m/s forward, zero sideways speed and yaw rate",
+    "head": "unused (zeros)",
+    "body": "unused (zeros)"
+  },
+  "duration_s": null,
+  "training": {
+    "method": "source network frozen and wrapped in a step counter carried in the head_roll action, which picks per-step joint-target and forward-command offsets from a table searched by CMA-ES on the event's official seeds; CPU only",
+    "base": "suraj-phanindra/microduck-roller-hc5-aifund @ 17c37f18 (policy.onnx sha256 8a4ad9a1b7153f291ccaaa59abef05419f51cec9a7fd0ec590f40ec0ee6803dd)",
+    "base_board_s": 0.94,
+    "search": {
+      "tool": "startoffsets.py",
+      "generation": 1467,
+      "knots": "26..77 every 3",
+      "channels": 13,
+      "popsize": 24,
+      "sigma0": 0.05,
+      "vx": 0.7
+    },
+    "simulator": "microduck-arena runner v4, MuJoCo 3.10.0, event roller-sprint-2m"
+  },
+  "arena": {
+    "event": "roller-sprint-2m"
+  }
+}
