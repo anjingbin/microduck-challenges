@@ -168,6 +168,14 @@ def forward_speed(env: ManagerBasedRlEnv, max_speed: float = 4.0) -> torch.Tenso
     return torch.clamp(torch.sum(vel * env._sprint_dir, dim=-1), min=-1.0, max=max_speed)
 
 
+def lane_hold(env: ManagerBasedRlEnv, std: float = 0.3) -> torch.Tensor:
+    """exp(-d²/std²) of the sideways distance d from the spawn line."""
+    _progress(env)  # captures the spawn line on reset
+    off = env.scene["robot"].data.root_link_pos_w[:, :2] - env._sprint_start
+    d = off[:, 0] * env._sprint_dir[:, 1] - off[:, 1] * env._sprint_dir[:, 0]
+    return torch.exp(-(d * d) / (std * std))
+
+
 def finish_bonus(env: ManagerBasedRlEnv, length_m: float = 2.0) -> torch.Tensor:
     """Paid on the step that crosses 2 m (the episode ends there); an earlier crossing pays more."""
     t = env.episode_length_buf.float() * env.step_dt
@@ -851,6 +859,9 @@ def make_env_cfg(
     cfg.rewards["finish_bonus"] = RewardTermCfg(func=finish_bonus, weight=30.0)
     cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0, params={"start_m": 1.7})
     cfg.terminations["reached_finish"] = TerminationTermCfg(func=reached_finish, time_out=True)
+    # Light and wide: nb5 ends 20-34 cm off line, running a longer, diagonal path. The
+    # AGENTS.md's refuted lane_hold (weight 1.0, std 0.15 m) made an early walker walk less.
+    cfg.rewards["lane_hold"] = RewardTermCfg(func=lane_hold, weight=0.2, params={"std": 0.3})
     cfg.episode_length_s = 6.0
     # The Arena falls a trunk past 60° held 0.3 s; terminate a little later so the dive survives.
     cfg.terminations["fell_over"].params["limit_angle"] = math.radians(70.0)
