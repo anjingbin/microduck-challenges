@@ -42,7 +42,7 @@ ENABLE_MASS_INERTIA_RANDOMIZATION = True  # Can enable once walking is stable
 ENABLE_JOINT_FRICTION_RANDOMIZATION = True  # Scales BAM's friction budget per-env via FrictionDRBamActuator.friction_scale
 ENABLE_JOINT_DAMPING_RANDOMIZATION = False
 ENABLE_ARMATURE_RANDOMIZATION = True  # Reflected rotor inertia (microban-style). DOES affect BAM (armature is set, not zeroed).
-ENABLE_VELOCITY_PUSHES = True  # Velocity-based pushes for robustness training
+ENABLE_VELOCITY_PUSHES = False  # The Arena never pushes; a push-proof gait is a slower one
 ENABLE_IMU_ORIENTATION_RANDOMIZATION = True  # Simulates mounting errors
 ENABLE_ENCODER_BIAS = True  # Per-env joint encoder calibration offset (actor obs sees joint_pos + bias)
 ENABLE_BASE_ORIENTATION_RANDOMIZATION = False  # Randomize initial tilt to force reactive behavior
@@ -138,6 +138,49 @@ def heading_error(env: ManagerBasedRlEnv) -> torch.Tensor:
     reference = torch.where(env.episode_length_buf == 0, yaw, getattr(env, "_heading_ref", yaw))
     error = yaw - reference
     return torch.atan2(torch.sin(error), torch.cos(error)).unsqueeze(-1)
+
+
+def forward_speed(env: ManagerBasedRlEnv, max_speed: float = 4.0) -> torch.Tensor:
+    """Raw forward body-frame speed, whatever the command says: the race is won on speed."""
+    vx = env.scene["robot"].data.root_link_lin_vel_b[:, 0]
+    return torch.clamp(vx, min=-1.0, max=max_speed)
+
+
+def _progress(env: ManagerBasedRlEnv) -> torch.Tensor:
+    """Distance along the spawn heading, as the Arena measures the race."""
+    asset = env.scene["robot"]
+    pos = asset.data.root_link_pos_w[:, :2]
+    if not hasattr(env, "_sprint_start"):
+        env._sprint_start = pos.clone()
+        env._sprint_dir = torch.zeros_like(pos)
+        env._sprint_dir[:, 0] = 1.0
+    fresh = env.episode_length_buf <= 1
+    if fresh.any():
+        w, x, y, z = asset.data.root_link_quat_w.unbind(-1)
+        yaw = torch.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+        env._sprint_start[fresh] = pos[fresh]
+        env._sprint_dir[fresh] = torch.stack([torch.cos(yaw), torch.sin(yaw)], dim=-1)[fresh]
+    return torch.sum((pos - env._sprint_start) * env._sprint_dir, dim=-1)
+
+
+def finish_bonus(env: ManagerBasedRlEnv, length_m: float = 2.0) -> torch.Tensor:
+    """Paid on the step that crosses 2 m (the episode ends there); an earlier crossing pays more."""
+    t = env.episode_length_buf.float() * env.step_dt
+    return (_progress(env) >= length_m).float() * (1.0 + torch.clamp(4.0 - t, min=0.0))
+
+
+def reached_finish(env: ManagerBasedRlEnv, length_m: float = 2.0) -> torch.Tensor:
+    return _progress(env) >= length_m
+
+
+def lean_near_finish(env: ManagerBasedRlEnv, start_m: float = 1.7, max_lean: float = 0.85) -> torch.Tensor:
+    """Forward pitch, paid only in the last metres: the Arena times the trunk over the line."""
+    from mjlab.utils.lab_api.math import quat_apply_inverse
+
+    asset = env.scene["robot"]
+    gravity_b = quat_apply_inverse(asset.data.root_link_quat_w, asset.data.gravity_vec_w)
+    near = (_progress(env) >= start_m).float()
+    return near * torch.clamp(gravity_b[:, 0], min=0.0, max=max_lean)
 
 
 def make_env_cfg(
@@ -250,7 +293,7 @@ def make_env_cfg(
     # level in steady gait while transient lean (push recovery, accel) stays
     # affordable.
     cfg.rewards["upright"].weight = knobs["upright_reward"]
-    cfg.rewards["upright"].params["std"] = math.sqrt(0.05)
+    cfg.rewards["upright"].params["std"] = math.sqrt(0.1)
 
     # Foot-specific configurations. In mjlab 1.3.0 foot_swing_height is fully
     # sensor-driven (no asset_cfg); only foot_clearance/foot_slip still carry an
@@ -279,13 +322,12 @@ def make_env_cfg(
     )
 
 
-    # air_time window [0.125, 0.300] s. NOTE: standing still at zero command is
-    # taught by the standing_envs curriculum (→25% standing envs by ~iter 2000),
-    # not by an explicit stillness/no-stepping term.
+    # air_time rewards each foot's swing time inside a window (set below).
     cfg.rewards["air_time"].weight = knobs["step_reward"]
     cfg.rewards["air_time"].params["command_threshold"] = 0.01
-    cfg.rewards["air_time"].params["threshold_min"] = 0.125
-    cfg.rewards["air_time"].params["threshold_max"] = 0.300
+    # A short window: the fastest entries run at a quick cadence, not long strides.
+    cfg.rewards["air_time"].params["threshold_min"] = 0.05
+    cfg.rewards["air_time"].params["threshold_max"] = 0.20
 
     cfg.rewards["body_ang_vel"].weight = -0.05
     cfg.rewards["angular_momentum"].weight = -0.02
@@ -607,7 +649,7 @@ def make_env_cfg(
     # standup/ground_pick envs mutate commands["twist"] in place, zeroing ranges)
     command: UniformVelocityCommandCfg = deepcopy(cfg.commands["twist"])
     cfg.commands["twist"] = command
-    command.rel_standing_envs = 0.02  # small but non-zero from the start, ramped up by curriculum
+    command.rel_standing_envs = 0.0  # the race never stands still
     command.rel_heading_envs = 0.0
     # The ranges are the Arena event's own (arena/events/sprint-2m.toml):
     # straight ahead, the event's sweep of commanded speeds, never sideways or
@@ -717,26 +759,7 @@ def make_env_cfg(
             "weight_stages": [
                 {"step": 0, "weight": -0.1},
                 {"step": 500 * NUM_STEPS_PER_ENV, "weight": -0.2},
-                {"step": 750 * NUM_STEPS_PER_ENV, "weight": -0.4},
-                {"step": 1000 * NUM_STEPS_PER_ENV, "weight": -0.6},
-                {"step": 1250 * NUM_STEPS_PER_ENV, "weight": -0.8},
-                {"step": 1500 * NUM_STEPS_PER_ENV, "weight": -1.0},
-            ],
-        },
-    )
-
-    # Gradually increase standing env fraction after walking is established
-    cfg.curriculum["standing_envs"] = CurriculumTermCfg(
-        func=microduck_mdp.standing_envs_curriculum,
-        params={
-            "command_name": "twist",
-            "standing_stages": [
-                {"step": 0,           "rel_standing_envs": 0.02},
-                {"step": 500 * 24,    "rel_standing_envs": 0.05},
-                {"step": 750 * 24,    "rel_standing_envs": 0.1},
-                {"step": 1000 * 24,   "rel_standing_envs": 0.15},
-                {"step": 1500 * 24,   "rel_standing_envs": 0.2},
-                {"step": 2000 * 24,   "rel_standing_envs": 0.25},
+                {"step": 750 * NUM_STEPS_PER_ENV, "weight": -0.3},
             ],
         },
     )
@@ -823,6 +846,18 @@ def make_env_cfg(
         },
     )
 
+    # Race shaping (from the bubu-sprint-fast campaign: speed over command tracking).
+    # forward_speed is the task reward; track_linear_velocity drops to its knob's floor.
+    cfg.rewards["forward_speed"] = RewardTermCfg(func=forward_speed, weight=5.0, params={"max_speed": 4.0})
+    cfg.rewards["pose"].weight = 0.3
+    cfg.rewards["fall_penalty"] = RewardTermCfg(func=mdp.is_terminated, weight=-25.0)
+    cfg.rewards["finish_bonus"] = RewardTermCfg(func=finish_bonus, weight=30.0)
+    cfg.rewards["lean_near_finish"] = RewardTermCfg(func=lean_near_finish, weight=5.0, params={"start_m": 1.7})
+    cfg.terminations["reached_finish"] = TerminationTermCfg(func=reached_finish, time_out=True)
+    cfg.episode_length_s = 6.0
+    # The Arena falls a trunk past 60° held 0.3 s; terminate a little later so the dive survives.
+    cfg.terminations["fell_over"].params["limit_angle"] = math.radians(70.0)
+
     return cfg
 
 
@@ -860,7 +895,7 @@ RL_CFG = RslRlOnPolicyRunnerCfg(
     wandb_project="mjlab_microduck",
     experiment_name="sprint_2m",  # logs/rsl_rl/sprint_2m/
     run_name="sprint_2m",
-    save_interval=250,
+    save_interval=50,
     num_steps_per_env=24,
     max_iterations=50_000,
 )
