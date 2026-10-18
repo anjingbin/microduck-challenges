@@ -1,12 +1,19 @@
 # bubu sprint nb: a new sprint-2m base trained from scratch, then ES on the Arena scorer
 
 Published as [dadudu/microduck-bubu-sprint](https://huggingface.co/dadudu/microduck-bubu-sprint)
-`bubu-nb4-es2`, entered on `sprint-2m`: **0.952 s, 5/5 at 0.30 m/s** (run `01M56230N6HRHM18C0AHQ1`),
-32nd of 99 entries, 10th of 25 players on 2026-10-17. Own lineage, no other entry's weights.
+`bubu-nb4-es2-finish`, entered on `sprint-2m`: **0.944 s, 5/5 at 0.30 m/s** (run
+`01M56CRNEFC7A4SC4HARVT`), 31st of 102 entries, 10th of 25 players on 2026-10-18. Own lineage, no
+other entry's weights.
 
-`publish/policy.onnx` (sha256 `f98082ff…`) is nb4 checkpoint 850 (1.328 s), improved by
-`es_weights.py` (sigma 0.02, lr 0.01, ~1300 generations, 0.968 s, entered as `bubu-nb4-es`), then a
-finer pass (sigma 0.005, lr 0.003, generation 425). Local seeds: 0.96 / 0.94 / 0.94 / 0.96 / 0.96.
+- `publish/es2_0.952.onnx` (sha256 `f98082ff…`, entered as `bubu-nb4-es2`, 0.952 s): nb4 checkpoint
+  850 (1.328 s), improved by `es_weights.py` (sigma 0.02, lr 0.01, ~1300 generations, 0.968 s,
+  entered as `bubu-nb4-es`), then a finer pass (sigma 0.005, lr 0.003, generation 425).
+  Local seeds 0.96 / 0.94 / 0.94 / 0.96 / 0.96.
+- `publish/policy.onnx` (sha256 `10e62429…`, 0.944 s): that network frozen inside `so_finish.py`'s
+  step-counter wrapper, offsets over the last race steps only (knots 58..74 every 2, offsets in
+  `finish_offsets_0.944.npy`), found by CMA-ES on the official seeds (in-sample). Seeds
+  0.94 / 0.94 / 0.94 / 0.96 / 0.94; the dive now starts at 1.52 m instead of 1.73 m (hc5: 1.56 m),
+  max pitch 46° (hc5: 66°). The wrapper alone costs a step (0.960 s with zero offsets).
 
 ## Training runs (HF Jobs, l4x1, `src/microduck_challenges/sprint_2m/`)
 
@@ -58,6 +65,10 @@ remix/sprint-nb/score_run.sh dadudu/mjlab-sprint2m-microduck-nb4 nb4   # every c
 .venv/bin/python remix/sprint-nb/gait.py hc5 hc5.onnx 1.15 nb4 onnx/nb4_850.onnx 0.30
 .venv/bin/python remix/sprint-nb/trace.py onnx/nb4_850.onnx 0.30
 ```
+
+`so_finish.py` is `remix/hill-so/so_hill.py` with `EVENT = "sprint-2m"` and a `--k-start`: offsets
+ramp from zero there, so the steps before it are untouched:
+`.venv/bin/python remix/sprint-nb/so_finish.py BASE.onnx OUT --vx 0.30 --k-start 58 --k-end 74 --every 2 --sigma0 0.05 --beat 0.952`.
 
 `es_weights.py` imports `remix/hill-so/hc_weights.py`. `score_run.sh` writes `onnx/<run>_<N>.onnx`
 and `publish-eval/`; delete `publish-eval/` afterwards.
