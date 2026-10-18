@@ -1,19 +1,23 @@
 # bubu sprint nb: a new sprint-2m base trained from scratch, then ES on the Arena scorer
 
 Published as [dadudu/microduck-bubu-sprint](https://huggingface.co/dadudu/microduck-bubu-sprint)
-`bubu-nb4-es2-finish`, entered on `sprint-2m`: **0.944 s, 5/5 at 0.30 m/s** (run
-`01M56CRNEFC7A4SC4HARVT`), 31st of 102 entries, 10th of 25 players on 2026-10-18. Own lineage, no
-other entry's weights.
+`bubu-nb4-es2-mid`, entered on `sprint-2m`: **0.940 s, 5/5 at 0.30 m/s** (run
+`01M56GDTG9JVH3V9F3DGQY`), 10th of 25 players on 2026-10-18. Own lineage, no other entry's weights.
 
 - `publish/es2_0.952.onnx` (sha256 `f98082ff…`, entered as `bubu-nb4-es2`, 0.952 s): nb4 checkpoint
   850 (1.328 s), improved by `es_weights.py` (sigma 0.02, lr 0.01, ~1300 generations, 0.968 s,
   entered as `bubu-nb4-es`), then a finer pass (sigma 0.005, lr 0.003, generation 425).
   Local seeds 0.96 / 0.94 / 0.94 / 0.96 / 0.96.
-- `publish/policy.onnx` (sha256 `10e62429…`, 0.944 s): that network frozen inside `so_finish.py`'s
+- `publish/finish_0.944.onnx` (sha256 `10e62429…`, entered as `bubu-nb4-es2-finish`, 0.944 s): that network frozen inside `so_finish.py`'s
   step-counter wrapper, offsets over the last race steps only (knots 58..74 every 2, offsets in
   `finish_offsets_0.944.npy`), found by CMA-ES on the official seeds (in-sample). Seeds
   0.94 / 0.94 / 0.94 / 0.96 / 0.94; the dive now starts at 1.52 m instead of 1.73 m (hc5: 1.56 m),
   max pitch 46° (hc5: 66°). The wrapper alone costs a step (0.960 s with zero offsets).
+- `publish/policy.onnx` (sha256 `9bc2681c…`, 0.940 s, all seeds 0.94): the same wrapper with offsets
+  from about 0.5 m to the line (knots 40..74 every 3, `mid_offsets_0.940.npy`). Meant to test whether
+  the mid-race acceleration hc5 shows (2.2 -> 3.0 m/s, steps 29 -> 37 cm) is reachable on our gait:
+  it is not. The speed at 0.3-0.6 s did not move (2.09/2.19/2.22 m/s vs 2.08/2.17/2.21); the step
+  again came from the last 0.3 s (2.47/2.70 vs 2.35/2.45 m/s).
 
 ## Training runs (HF Jobs, l4x1, `src/microduck_challenges/sprint_2m/`)
 
