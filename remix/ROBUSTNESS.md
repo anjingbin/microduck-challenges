@@ -49,3 +49,22 @@ official seeds and falls on nine seeds in ten elsewhere.
 | bubu-distill-xin (own, distilled from Xin) | 1.000 s | 8/20 | 12 | 1.04 s |
 | bubu-roll5-100 (own PPO) | 2.264 s | 20/20 | 0 | 2.28 s |
 | bubu-roll2-250 (own PPO) | 2.332 s | 19/20 | 1 | 2.34 s |
+
+## Robust ES (`es_robust.py`): fast and stable
+
+ES on the weights against seeds 6-15 (a fall costs the time limit), held-out seeds 16-35 for
+picking the generation, then checked on fresh seeds 36-55 and the official ones.
+
+| Policy | Arena (official) | Fresh seeds 36-55 | Mean finish |
+|---|---|---|---|
+| hill: bubu-hill-dive1-75 (base) | 1.224 s | 19/20 | 1.239 s |
+| **hill: dive1 + robust ES, generation 300 (`hill-robust/policy.onnx`)** | **1.008 s** | **20/20** | **0.994 s** |
+| hill: bubu-hill-so (entered) | 0.784 s | 1/20 | 0.82 s |
+| roller: suraj hc5 (base) | 0.940 s | 15/20 | 0.987 s |
+| roller: hc5 + robust ES, generation 380 | 0.992 s | 16/20 | 0.999 s |
+| roller: bubu-roller-so (entered) | 0.932 s | 10/20 | 1.002 s |
+
+Hill (`--vx 0.30 --sigma 0.02 --lr 0.01 --pairs 12 --workers 2 --seed 41`): held-out finishes
+stayed 20/20 up to generation 300, then the policy started fitting the 10 training seeds
+(held-out 18/20 by 340). Roller: no real gain in 500 generations; hc5 falls on a quarter of
+other seeds and 10 training seeds did not move that.
