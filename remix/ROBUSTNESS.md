@@ -1,0 +1,51 @@
+# Off-seed robustness of the dadudu entries (2026-10-19)
+
+The Arena scores every race on its official seeds 1-5. Every entry below was tuned, directly or
+through its base, against those seeds. `robust.py` races each policy on seeds 6-25 instead (same
+course, same perturbation rules, the speed the Arena picked for it) and counts falls:
+
+```bash
+.venv/bin/python remix/robust.py EVENT NAME A.onnx VX [NAME B.onnx VX ...]
+```
+
+Simulation only; a real robot is another question.
+
+## sprint-2m
+
+| Policy | Arena (seeds 1-5) | Seeds 6-25 finished | Falls | Mean finish |
+|---|---|---|---|---|
+| bubu-first (stock recipe, pushes on) | 4.928 s | 20/20 | 0 | 4.97 s |
+| bubu-fast4-350 | 1.372 s | 19/20 | 1 | 1.38 s |
+| bubu-fast10-75 | 1.204 s | 17/20 | 3 | 1.23 s |
+| nb4 checkpoint 850 | 1.328 s | 18/20 | 2 | 1.27 s |
+| nb6 checkpoint 600 | 1.140 s | 18/20 | 2 | 1.14 s |
+| **bubu-nb4-es** (`sprint-nb/publish/es_0.968.onnx`) | 0.968 s | **18/20** | 2 | 1.07 s |
+| bubu-nb4-es2 (`es2_0.952.onnx`) | 0.952 s | 14/20 | 6 | 1.01 s |
+| bubu-nb4-es2-finish (`finish_0.944.onnx`) | 0.944 s | 14/20 | 6 | 1.00 s |
+| bubu-nb4-es2-mid (`policy.onnx`, entered) | 0.940 s | 14/20 | 6 | 1.03 s |
+
+The first ES pass (sigma 0.02) kept the base's robustness; the fine pass (sigma 0.005) and the
+offset tables traded it for the official seeds.
+
+## hill-climb-1m5
+
+| Policy | Arena | Seeds 6-25 finished | Falls | Mean finish |
+|---|---|---|---|---|
+| bubu-hill-so (`hill-so/publish/policy.onnx`, entered) | 0.784 s | 2/20 | 18 | 0.85 s |
+| juicenv/microduck-hill-es9 (its base) | 0.788 s | 2/20 | 18 | 0.87 s |
+| bubu-hill-es2 (own) | 1.164 s | 15/20 | 5 | 1.24 s |
+| bubu-hill-dive1-75 (own) | 1.224 s | 19/20 | 1 | 1.24 s |
+
+The 0.78 s lineage (namenu -> suraj hc -> juicenv es -> remixes) is ES/hill-climbed on the
+official seeds and falls on nine seeds in ten elsewhere.
+
+## roller-sprint-2m
+
+| Policy | Arena | Seeds 6-25 finished | Falls | Mean finish |
+|---|---|---|---|---|
+| bubu-roller-so (`roller-so/publish/policy.onnx`, entered) | 0.932 s | 11/20 | 9 | 1.01 s |
+| suraj-phanindra/microduck-roller-hc5-aifund (its base) | 0.940 s | 15/20 | 5 | 1.00 s |
+| DenRakEiw/microduck-senate_duck_0928 (1st) | 0.928 s | 7/20 | 13 | 1.01 s |
+| bubu-distill-xin (own, distilled from Xin) | 1.000 s | 8/20 | 12 | 1.04 s |
+| bubu-roll5-100 (own PPO) | 2.264 s | 20/20 | 0 | 2.28 s |
+| bubu-roll2-250 (own PPO) | 2.332 s | 19/20 | 1 | 2.34 s |
