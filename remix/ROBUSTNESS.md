@@ -68,3 +68,18 @@ Hill (`--vx 0.30 --sigma 0.02 --lr 0.01 --pairs 12 --workers 2 --seed 41`): held
 stayed 20/20 up to generation 300, then the policy started fitting the 10 training seeds
 (held-out 18/20 by 340). Roller: no real gain in 500 generations; hc5 falls on a quarter of
 other seeds and 10 training seeds did not move that.
+
+### Hill, round 2
+
+From round 1's generation 300, `es_robust.py --train-seeds 6-25 --val-seeds 26-45 --workers 4
+--seed 43` (20 training seeds against the round-1 overfit). Held-out seeds stayed 20/20 or 19/20
+throughout, the official time kept falling. Checked on 40 fresh seeds 56-95:
+
+| Policy | Arena (official) | Fresh seeds 56-95 | Mean finish |
+|---|---|---|---|
+| round 1, generation 300 (`hill-robust/round1_g300.onnx`) | 1.008 s @0.30 | 36/40 | 1.032 s |
+| round 2, generation 340 | 0.964 s @0.75 | 36/40 | 0.975 s |
+| round 2, generation 420 | 0.944 s @0.85 | 36/40 | 0.974 s |
+| **round 2, generation 460 (`hill-robust/policy.onnx`)** | **0.932 s @0.65** | **38/40** | **0.973 s** |
+
+Round 1's "20/20 on seeds 36-55" was a good draw: on 40 other seeds it falls on 4.
