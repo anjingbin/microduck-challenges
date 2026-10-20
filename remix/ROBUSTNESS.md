@@ -83,3 +83,23 @@ throughout, the official time kept falling. Checked on 40 fresh seeds 56-95:
 | **round 2, generation 460 (`hill-robust/policy.onnx`)** | **0.932 s @0.65** | **38/40** | **0.973 s** |
 
 Round 1's "20/20 on seeds 36-55" was a good draw: on 40 other seeds it falls on 4.
+
+### Roller, 20 training seeds
+
+From suraj-phanindra/microduck-roller-hc5-aifund @ 17c37f18 (not ours: credit it if published),
+`es_robust.py --event roller-sprint-2m --vx 0.70 --train-seeds 6-25 --val-seeds 26-45 --workers 4
+--seed 44`, 640 generations. Training finishes went 15/20 -> 20/20 by generation 60; held-out
+seeds swung between 15 and 20/20, so only generations at 20/20 there were checked on seeds 56-95:
+
+| Policy | Arena (official) | Fresh seeds 56-95 | Mean finish |
+|---|---|---|---|
+| hc5 (base) | 0.940 s @0.7 | 30/40 | 0.991 s |
+| bubu-roller-so (entered, offsets on hc5) | 0.932 s @0.7 | 28/40 | 0.995 s |
+| generation 240 | 0.996 s @0.5 | 37/40 | 0.998 s |
+| generation 280 | 0.996 s @0.5 | 36/40 | 0.996 s |
+| generation 540 | 0.992 s @0.4 | 38/40 | 1.005 s |
+| generation 580 | 0.996 s @0.6 | 39/40 | 1.000 s |
+| **generation 620 (`roller-robust/policy.onnx`)** | **0.984 s @0.9** | **40/40** | **0.996 s** |
+
+About 0.05 s slower than hc5 on the official seeds, about the same off them, and it stopped
+falling: 10 falls in 40 for hc5, none for generation 620.
